@@ -115,12 +115,16 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
               Icon(icon, size: 14, color: fg),
               const SizedBox(width: 6),
             ],
-            Text(
-              text,
-              style: TextStyle(
-                fontWeight: FontWeight.w800,
-                color: fg,
-                fontSize: 12,
+            Flexible(
+              child: Text(
+                text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: fg,
+                  fontSize: 12,
+                ),
               ),
             ),
           ],
@@ -135,127 +139,142 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            height: 48,
-                            width: 48,
-                            decoration: BoxDecoration(
-                              color: AppTokens.brand,
-                              borderRadius: BorderRadius.circular(14),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppTokens.brand.withValues(
-                                    alpha: 0.20,
-                                  ),
-                                  blurRadius: 18,
-                                  offset: const Offset(0, 10),
-                                ),
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.person_outline,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _member!.fullName,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headlineSmall
-                                      ?.copyWith(fontWeight: FontWeight.w900),
-                                ),
-                                const SizedBox(height: 6),
-                                Wrap(
-                                  spacing: 10,
-                                  runSpacing: 8,
-                                  children: [
-                                    pill(
-                                      text: isActive
-                                          ? 'Active Member'
-                                          : 'Inactive',
-                                      fg: isActive
-                                          ? AppTokens.brand
-                                          : Colors.red,
-                                      bg: isActive
-                                          ? AppTokens.brand.withValues(
-                                              alpha: 0.10,
-                                            )
-                                          : Colors.red.withValues(alpha: 0.08),
-                                      border: isActive
-                                          ? AppTokens.brand.withValues(
-                                              alpha: 0.20,
-                                            )
-                                          : Colors.red.withValues(alpha: 0.20),
-                                      icon: isActive
-                                          ? Icons.check_circle_outline
-                                          : Icons.cancel_outlined,
-                                    ),
-                                    Text(
-                                      'Member since $memberSince',
-                                      style: TextStyle(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onSurfaceVariant,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final narrow = constraints.maxWidth < 520;
+
+                final back = OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    side: BorderSide(
+                      color: Colors.black.withValues(alpha: 0.10),
+                    ),
+                    foregroundColor: Colors.black87,
+                  ),
+                  onPressed: () => context.go('/dashboard?tab=members'),
+                  icon: const Icon(Icons.arrow_back, size: 18),
+                  label: const Text('Back'),
+                );
+
+                final edit = FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppTokens.brand,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: () =>
+                      context.go('/members/${widget.memberId}/edit'),
+                  icon: const Icon(Icons.edit_outlined),
+                  label: const Text('Edit Profile'),
+                );
+
+                final titleBlock = Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      height: 48,
+                      width: 48,
+                      decoration: BoxDecoration(
+                        color: AppTokens.brand,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTokens.brand.withValues(alpha: 0.20),
+                            blurRadius: 18,
+                            offset: const Offset(0, 10),
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Column(
-                  children: [
-                    OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        side: BorderSide(
-                          color: Colors.black.withValues(alpha: 0.10),
-                        ),
-                        foregroundColor: Colors.black87,
+                      child: const Icon(
+                        Icons.person_outline,
+                        color: Colors.white,
                       ),
-                      onPressed: () => context.go('/dashboard?tab=members'),
-                      icon: const Icon(Icons.arrow_back, size: 18),
-                      label: const Text('Back'),
                     ),
-                    const SizedBox(height: 10),
-                    if (canEdit)
-                      FilledButton.icon(
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppTokens.brand,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _member!.fullName,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(fontWeight: FontWeight.w900),
                           ),
-                        ),
-                        onPressed: () =>
-                            context.go('/members/${widget.memberId}/edit'),
-                        icon: const Icon(Icons.edit_outlined),
-                        label: const Text('Edit Profile'),
+                          const SizedBox(height: 6),
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 8,
+                            children: [
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 220,
+                                ),
+                                child: pill(
+                                  text: isActive ? 'Active Member' : 'Inactive',
+                                  fg: isActive ? AppTokens.brand : Colors.red,
+                                  bg: isActive
+                                      ? AppTokens.brand.withValues(alpha: 0.10)
+                                      : Colors.red.withValues(alpha: 0.08),
+                                  border: isActive
+                                      ? AppTokens.brand.withValues(alpha: 0.20)
+                                      : Colors.red.withValues(alpha: 0.20),
+                                  icon: isActive
+                                      ? Icons.check_circle_outline
+                                      : Icons.cancel_outlined,
+                                ),
+                              ),
+                              Text(
+                                'Member since $memberSince',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
+                    ),
                   ],
-                ),
-              ],
+                );
+
+                if (!narrow) {
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: titleBlock),
+                      const SizedBox(width: 12),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: [back, if (canEdit) edit],
+                      ),
+                    ],
+                  );
+                }
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    titleBlock,
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [back, if (canEdit) edit],
+                    ),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 16),
             LayoutBuilder(
