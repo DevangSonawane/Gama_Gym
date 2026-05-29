@@ -8,23 +8,65 @@ import 'src/env.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  try {
+  runApp(const _BootstrapApp());
+}
+
+class _BootstrapApp extends StatefulWidget {
+  const _BootstrapApp();
+
+  @override
+  State<_BootstrapApp> createState() => _BootstrapAppState();
+}
+
+class _BootstrapAppState extends State<_BootstrapApp> {
+  late final Future<AppEnv> _boot;
+
+  @override
+  void initState() {
+    super.initState();
+    _boot = _initialize();
+  }
+
+  Future<AppEnv> _initialize() async {
     await dotenv.load(fileName: '.env');
     final env = AppEnv.fromDotEnv(dotenv);
-
     await Supabase.initialize(
       url: env.supabaseUrl,
       anonKey: env.supabaseAnonKey,
     );
+    return env;
+  }
 
-    runApp(App(env: env));
-  } catch (e, st) {
-    runApp(BootFailureApp(error: e, stackTrace: st));
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<AppEnv>(
+      future: _boot,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return BootFailureApp(
+            error: snapshot.error!,
+            stackTrace: snapshot.stackTrace ?? StackTrace.current,
+          );
+        }
+        final env = snapshot.data;
+        if (env == null) {
+          return const MaterialApp(
+            debugShowCheckedModeBanner: false,
+            home: Scaffold(body: Center(child: CircularProgressIndicator())),
+          );
+        }
+        return App(env: env);
+      },
+    );
   }
 }
 
 class BootFailureApp extends StatelessWidget {
-  const BootFailureApp({super.key, required this.error, required this.stackTrace});
+  const BootFailureApp({
+    super.key,
+    required this.error,
+    required this.stackTrace,
+  });
 
   final Object error;
   final StackTrace stackTrace;

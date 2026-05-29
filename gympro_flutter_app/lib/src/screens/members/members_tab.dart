@@ -26,6 +26,11 @@ class _MembersTabState extends State<MembersTab> {
   String? _error;
   List<Member> _members = const [];
 
+  void _safeSetState(VoidCallback fn) {
+    if (!mounted) return;
+    setState(fn);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -40,17 +45,17 @@ class _MembersTabState extends State<MembersTab> {
   }
 
   Future<void> _load() async {
-    setState(() {
+    _safeSetState(() {
       _loading = true;
       _error = null;
     });
     try {
       final members = await _repo.listMembers();
-      setState(() => _members = members);
+      _safeSetState(() => _members = members);
     } catch (e) {
-      setState(() => _error = e.toString());
+      _safeSetState(() => _error = e.toString());
     } finally {
-      setState(() => _loading = false);
+      _safeSetState(() => _loading = false);
     }
   }
 
@@ -77,13 +82,21 @@ class _MembersTabState extends State<MembersTab> {
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(child: AppSearchField(controller: _search, hintText: 'Search members...')),
+              Expanded(
+                child: AppSearchField(
+                  controller: _search,
+                  hintText: 'Search members...',
+                ),
+              ),
               const SizedBox(width: 12),
               FilledButton(
                 style: FilledButton.styleFrom(
                   backgroundColor: AppTokens.brand,
                   shape: RoundedRectangleBorder(borderRadius: AppTokens.pill),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                 ),
                 onPressed: () => context.go('/members/new'),
                 child: const Icon(Icons.person_add_alt_1),
@@ -116,7 +129,10 @@ class _MembersTabState extends State<MembersTab> {
                 children: [
                   for (final m in rows) ...[
                     ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 6,
+                      ),
                       leading: Container(
                         height: 40,
                         width: 40,
@@ -126,21 +142,34 @@ class _MembersTabState extends State<MembersTab> {
                         ),
                         alignment: Alignment.center,
                         child: Text(
-                          m.firstName.isEmpty ? '?' : m.firstName[0].toUpperCase(),
-                          style: const TextStyle(fontWeight: FontWeight.w800, color: AppTokens.brand),
+                          m.firstName.isEmpty
+                              ? '?'
+                              : m.firstName[0].toUpperCase(),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: AppTokens.brand,
+                          ),
                         ),
                       ),
-                      title: Text(m.fullName, style: const TextStyle(fontWeight: FontWeight.w700)),
+                      title: Text(
+                        m.fullName,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
                       subtitle: Text(
                         '${m.email}\n${m.membershipType} • ${m.status}',
-                        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
                       isThreeLine: true,
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () => context.go('/members/${m.id}'),
                     ),
                     if (m.id != rows.last.id)
-                      Divider(height: 1, color: Colors.black.withValues(alpha: 0.06)),
+                      Divider(
+                        height: 1,
+                        color: Colors.black.withValues(alpha: 0.06),
+                      ),
                   ],
                 ],
               ),

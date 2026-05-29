@@ -64,7 +64,9 @@ class DashboardShell extends StatelessWidget {
           );
         }
 
-        final effectiveTab = tab.trim().isEmpty ? 'overview' : tab.trim();
+        final effectiveTab = tab.trim().isEmpty
+            ? 'overview'
+            : tab.trim().toLowerCase();
 
         final allItems = <_NavItem>[
           const _NavItem(
@@ -157,14 +159,14 @@ class DashboardShell extends StatelessWidget {
         return Scaffold(
           backgroundColor: AppTokens.pageBg,
           appBar: AppBar(
-            title: Text(
-              'Welcome back, ${user.firstName}',
-              style: const TextStyle(fontWeight: FontWeight.w800),
+            title: const Text(
+              'Dashboard',
+              style: TextStyle(fontWeight: FontWeight.w800),
             ),
             actions: [
               IconButton(
                 tooltip: 'Profile',
-                onPressed: () => context.go('/dashboard?tab=profile'),
+                onPressed: () => context.go('/dashboard?tab=users'),
                 icon: const Icon(Icons.account_circle_outlined),
               ),
               IconButton(
@@ -181,24 +183,25 @@ class DashboardShell extends StatelessWidget {
                   subtitle: 'You don’t have permission to view this section.',
                   icon: Icons.lock_outline,
                 )
-              : Row(
+              : isWide
+              ? Row(
                   children: [
-                    if (isWide)
-                      NavigationRail(
-                        extended: true,
-                        selectedIndex: safeIndex,
-                        onDestinationSelected: (i) => goTab(items[i].tab),
-                        destinations: [
-                          for (final item in items)
-                            NavigationRailDestination(
-                              icon: Icon(item.icon),
-                              label: Text(item.label),
-                            ),
-                        ],
-                      ),
+                    NavigationRail(
+                      extended: true,
+                      selectedIndex: safeIndex,
+                      onDestinationSelected: (i) => goTab(items[i].tab),
+                      destinations: [
+                        for (final item in items)
+                          NavigationRailDestination(
+                            icon: Icon(item.icon),
+                            label: Text(item.label),
+                          ),
+                      ],
+                    ),
                     Expanded(child: body()),
                   ],
-                ),
+                )
+              : body(),
           bottomNavigationBar: isWide
               ? null
               : _FloatingPillNav(
@@ -229,6 +232,11 @@ class _UsersTabState extends State<_UsersTab> {
   String? _error;
   List<UserRow> _users = const [];
 
+  void _safeSetState(VoidCallback fn) {
+    if (!mounted) return;
+    setState(fn);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -243,17 +251,17 @@ class _UsersTabState extends State<_UsersTab> {
   }
 
   Future<void> _load() async {
-    setState(() {
+    _safeSetState(() {
       _loading = true;
       _error = null;
     });
     try {
       final users = await _repo.listUsers();
-      setState(() => _users = users);
+      _safeSetState(() => _users = users);
     } catch (e) {
-      setState(() => _error = e.toString());
+      _safeSetState(() => _error = e.toString());
     } finally {
-      setState(() => _loading = false);
+      _safeSetState(() => _loading = false);
     }
   }
 

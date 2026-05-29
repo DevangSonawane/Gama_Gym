@@ -23,6 +23,11 @@ class _PaymentsTabState extends State<PaymentsTab> {
   String? _error;
   List<Payment> _payments = const [];
 
+  void _safeSetState(VoidCallback fn) {
+    if (!mounted) return;
+    setState(fn);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -30,17 +35,17 @@ class _PaymentsTabState extends State<PaymentsTab> {
   }
 
   Future<void> _load() async {
-    setState(() {
+    _safeSetState(() {
       _loading = true;
       _error = null;
     });
     try {
       final payments = await _repo.listPayments();
-      setState(() => _payments = payments);
+      _safeSetState(() => _payments = payments);
     } catch (e) {
-      setState(() => _error = e.toString());
+      _safeSetState(() => _error = e.toString());
     } finally {
-      setState(() => _loading = false);
+      _safeSetState(() => _loading = false);
     }
   }
 
@@ -58,14 +63,15 @@ class _PaymentsTabState extends State<PaymentsTab> {
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(
-                child: SizedBox.shrink(),
-              ),
+              Expanded(child: SizedBox.shrink()),
               FilledButton(
                 style: FilledButton.styleFrom(
                   backgroundColor: AppTokens.brand,
                   shape: RoundedRectangleBorder(borderRadius: AppTokens.pill),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                 ),
                 onPressed: () => context.go('/payments/new'),
                 child: const Icon(Icons.add),
@@ -74,8 +80,13 @@ class _PaymentsTabState extends State<PaymentsTab> {
               OutlinedButton(
                 style: OutlinedButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: AppTokens.pill),
-                  side: BorderSide(color: AppTokens.brand.withValues(alpha: 0.25)),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  side: BorderSide(
+                    color: AppTokens.brand.withValues(alpha: 0.25),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                 ),
                 onPressed: () => context.go('/promocodes/new'),
                 child: const Icon(Icons.sell_outlined),
@@ -108,7 +119,10 @@ class _PaymentsTabState extends State<PaymentsTab> {
                 children: [
                   for (final p in _payments) ...[
                     ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 6,
+                      ),
                       leading: Container(
                         height: 40,
                         width: 40,
@@ -117,7 +131,10 @@ class _PaymentsTabState extends State<PaymentsTab> {
                           borderRadius: BorderRadius.circular(14),
                         ),
                         alignment: Alignment.center,
-                        child: const Icon(Icons.receipt_long_outlined, color: AppTokens.brand),
+                        child: const Icon(
+                          Icons.receipt_long_outlined,
+                          color: AppTokens.brand,
+                        ),
                       ),
                       title: Text(
                         '${p.currency} ${p.amount.toStringAsFixed(2)}',
@@ -125,12 +142,17 @@ class _PaymentsTabState extends State<PaymentsTab> {
                       ),
                       subtitle: Text(
                         '${p.status} • ${p.type}\n${p.description}',
-                        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
                       isThreeLine: true,
                     ),
                     if (p.id != _payments.last.id)
-                      Divider(height: 1, color: Colors.black.withValues(alpha: 0.06)),
+                      Divider(
+                        height: 1,
+                        color: Colors.black.withValues(alpha: 0.06),
+                      ),
                   ],
                 ],
               ),

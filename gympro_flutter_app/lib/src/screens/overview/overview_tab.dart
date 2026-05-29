@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../../auth/auth_controller.dart';
 import '../../data/members_repository.dart';
 import '../../data/payments_repository.dart';
-import '../../ui/app_surfaces.dart';
 import '../../ui/app_tokens.dart';
 
 class OverviewTab extends StatefulWidget {
@@ -21,8 +20,13 @@ class _OverviewTabState extends State<OverviewTab> {
   final _paymentsRepo = PaymentsRepository();
 
   int? _memberCount;
-  double? _totalRevenue;
+  double? _monthlyRevenue;
   bool _loading = true;
+
+  void _safeSetState(VoidCallback fn) {
+    if (!mounted) return;
+    setState(fn);
+  }
 
   @override
   void initState() {
@@ -31,144 +35,503 @@ class _OverviewTabState extends State<OverviewTab> {
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
+    _safeSetState(() => _loading = true);
     try {
       final members = await _membersRepo.listMembers();
       final payments = await _paymentsRepo.listPayments();
+
+      final now = DateTime.now();
+      final startOfMonth = DateTime(now.year, now.month, 1);
       final revenue = payments
           .where((p) => p.status.toUpperCase() == 'COMPLETED')
+          .where((p) => (p.paidDate ?? p.dueDate ?? now).isAfter(startOfMonth))
           .fold<double>(0, (sum, p) => sum + p.amount);
-      setState(() {
+
+      _safeSetState(() {
         _memberCount = members.length;
-        _totalRevenue = revenue;
+        _monthlyRevenue = revenue;
       });
     } catch (_) {
-      setState(() {
+      _safeSetState(() {
         _memberCount = null;
-        _totalRevenue = null;
+        _monthlyRevenue = null;
       });
     } finally {
-      setState(() => _loading = false);
+      _safeSetState(() => _loading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final user = widget.authController.user!;
+    final isWide = MediaQuery.of(context).size.width >= 920;
 
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
         children: [
-          AppSurface(
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Welcome back, ${user.firstName}',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Here’s what’s happening at your gym today.',
-                        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  height: 44,
-                  width: 44,
-                  decoration: BoxDecoration(
-                    color: AppTokens.brand.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Icon(Icons.auto_awesome, color: AppTokens.brand),
-                ),
-              ],
-            ),
+          _IntroSection(
+            firstName: user.firstName,
+            onMembers: () => context.go('/dashboard?tab=members'),
+            onSchedule: () => context.go('/dashboard?tab=classes'),
+            onRevenue: () => context.go('/dashboard?tab=payments'),
           ),
           const SizedBox(height: 14),
-          const AppSectionTitle(
-            title: 'Quick stats',
-            subtitle: 'A simple snapshot of your business.',
+          const _SectionHeader(
+            title: 'Key features',
+            subtitle: 'Everything you need to run your gym, in one view.',
+            icon: Icons.auto_awesome_outlined,
           ),
           const SizedBox(height: 12),
           LayoutBuilder(
             builder: (context, constraints) {
-              final isNarrow = constraints.maxWidth < 520;
-              final children = [
-                _StatCard(
-                  title: 'Members',
-                  value: _loading ? null : (_memberCount?.toString() ?? '—'),
-                  icon: Icons.people_outline,
-                  onTap: () => context.go('/dashboard?tab=members'),
+              final isNarrow = constraints.maxWidth < 720;
+              const tiles = [
+                _FeatureTile(
+                  icon: Icons.trending_up,
+                  title: 'Growth at a glance',
+                  description:
+                      'Track member growth and revenue trends without leaving the dashboard.',
+                  gradient: [Color(0xFF00BC7D), Color(0xFF009664)],
                 ),
-                _StatCard(
-                  title: 'Revenue',
-                  value: _loading ? null : (_totalRevenue == null ? '—' : 'INR ${_totalRevenue!.toStringAsFixed(0)}'),
-                  icon: Icons.payments_outlined,
-                  onTap: () => context.go('/dashboard?tab=payments'),
-                ),
-                _StatCard(
-                  title: 'Classes',
-                  value: '—',
+                _FeatureTile(
                   icon: Icons.calendar_month_outlined,
-                  onTap: () => context.go('/dashboard?tab=classes'),
+                  title: 'Smart scheduling',
+                  description:
+                      'See how classes are filling up so you can adjust capacity in real time.',
+                  gradient: [Color(0xFF00BC7D), Color(0xFF10B981)],
+                ),
+                _FeatureTile(
+                  icon: Icons.monitor_heart_outlined,
+                  title: 'Operations overview',
+                  description:
+                      'Monitor staff, payments, and activity to keep your gym running smoothly.',
+                  gradient: [Color(0xFF10B981), Color(0xFF14B8A6)],
                 ),
               ];
 
               if (isNarrow) {
                 return Column(
                   children: [
-                    for (final c in children) ...[
-                      c,
-                      const SizedBox(height: 10),
-                    ],
+                    for (final t in tiles) ...[t, const SizedBox(height: 10)],
                   ],
                 );
               }
 
               return Row(
                 children: [
-                  Expanded(child: children[0]),
+                  Expanded(child: tiles[0]),
                   const SizedBox(width: 10),
-                  Expanded(child: children[1]),
+                  Expanded(child: tiles[1]),
                   const SizedBox(width: 10),
-                  Expanded(child: children[2]),
+                  Expanded(child: tiles[2]),
                 ],
               );
             },
           ),
           const SizedBox(height: 14),
-          const AppSectionTitle(
-            title: 'Actions',
-            subtitle: 'Common tasks and shortcuts.',
+          const _SectionHeader(
+            title: 'Quick stats',
+            subtitle: 'A snapshot of your business this month.',
+            icon: Icons.dashboard_outlined,
           ),
           const SizedBox(height: 12),
-          AppSurface(
-            child: Wrap(
-              spacing: 10,
-              runSpacing: 10,
+          GridView.count(
+            crossAxisCount: isWide ? 4 : 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: isWide ? 1.55 : 1.35,
+            children: [
+              _MetricCard(
+                title: 'Total Members',
+                value: _loading ? null : (_memberCount?.toString() ?? '—'),
+                icon: Icons.people_outline,
+                gradient: const [Color(0xFF00BC7D), Color(0xFF009664)],
+                onTap: () => context.go('/dashboard?tab=members'),
+              ),
+              _MetricCard(
+                title: 'Active Classes',
+                value: '—',
+                icon: Icons.calendar_month_outlined,
+                gradient: const [Color(0xFF00BC7D), Color(0xFF10B981)],
+                onTap: () => context.go('/dashboard?tab=classes'),
+              ),
+              _MetricCard(
+                title: 'Monthly Revenue',
+                value: _loading
+                    ? null
+                    : (_monthlyRevenue == null
+                          ? '—'
+                          : 'INR ${_monthlyRevenue!.toStringAsFixed(0)}'),
+                icon: Icons.payments_outlined,
+                gradient: const [Color(0xFF10B981), Color(0xFF14B8A6)],
+                onTap: () => context.go('/dashboard?tab=payments'),
+              ),
+              _MetricCard(
+                title: 'Equipment Status',
+                value: '—',
+                icon: Icons.fitness_center,
+                gradient: const [Color(0xFF00BC7D), Color(0xFF0EA5E9)],
+                onTap: () {},
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          height: 40,
+          width: 40,
+          decoration: BoxDecoration(
+            color: AppTokens.brand.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Icon(icon, color: AppTokens.brand),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _IntroSection extends StatelessWidget {
+  const _IntroSection({
+    required this.firstName,
+    required this.onMembers,
+    required this.onSchedule,
+    required this.onRevenue,
+  });
+
+  final String firstName;
+  final VoidCallback onMembers;
+  final VoidCallback onSchedule;
+  final VoidCallback onRevenue;
+
+  @override
+  Widget build(BuildContext context) {
+    final date = DateTime.now();
+    final weekday = [
+      'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+    ][date.weekday % 7];
+    final month = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ][date.month - 1];
+    final dateLabel = '$weekday, $month ${date.day}';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+        boxShadow: AppTokens.softShadow(opacity: 0.06),
+      ),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Welcome back, $firstName',
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            "Here's what's happening at your gym today.",
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppTokens.brand.withValues(alpha: 0.06),
+              borderRadius: AppTokens.pill,
+              border: Border.all(
+                color: AppTokens.brand.withValues(alpha: 0.12),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                _ActionPill(
-                  icon: Icons.person_add_alt_1,
-                  label: 'Add member',
-                  onTap: () => context.go('/members/new'),
+                Container(
+                  height: 8,
+                  width: 8,
+                  decoration: const BoxDecoration(
+                    color: AppTokens.brand,
+                    shape: BoxShape.circle,
+                  ),
                 ),
-                _ActionPill(
-                  icon: Icons.badge_outlined,
-                  label: 'Add staff',
-                  onTap: () => context.go('/staff/new'),
+                const SizedBox(width: 8),
+                const Text(
+                  'Live',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: AppTokens.brand,
+                  ),
                 ),
-                _ActionPill(
-                  icon: Icons.receipt_long_outlined,
-                  label: 'New payment',
-                  onTap: () => context.go('/payments/new'),
+                const SizedBox(width: 10),
+                Container(
+                  height: 12,
+                  width: 1,
+                  color: Colors.black.withValues(alpha: 0.10),
+                ),
+                const SizedBox(width: 10),
+                Icon(
+                  Icons.schedule,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  dateLabel,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              OutlinedButton.icon(
+                onPressed: onMembers,
+                icon: const Icon(Icons.people_outline, size: 18),
+                label: const Text('Members'),
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: onSchedule,
+                icon: const Icon(Icons.calendar_month_outlined, size: 18),
+                label: const Text('Schedule'),
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
+              FilledButton.icon(
+                onPressed: onRevenue,
+                icon: const Icon(Icons.payments_outlined, size: 18),
+                label: const Text('Revenue'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppTokens.brand,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MetricCard extends StatelessWidget {
+  const _MetricCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+    required this.gradient,
+    required this.onTap,
+  });
+
+  final String title;
+  final String? value;
+  final IconData icon;
+  final List<Color> gradient;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return InkWell(
+      borderRadius: BorderRadius.circular(22),
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+          boxShadow: AppTokens.softShadow(opacity: 0.06),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  height: 44,
+                  width: 44,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(colors: gradient),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: gradient.first.withValues(alpha: 0.22),
+                        blurRadius: 18,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: Icon(icon, color: Colors.white),
+                ),
+                const Spacer(),
+                Icon(Icons.chevron_right, color: scheme.onSurfaceVariant),
+              ],
+            ),
+            const Spacer(),
+            Text(
+              title,
+              style: TextStyle(
+                color: scheme.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              value ?? '…',
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FeatureTile extends StatelessWidget {
+  const _FeatureTile({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.gradient,
+  });
+
+  final IconData icon;
+  final String title;
+  final String description;
+  final List<Color> gradient;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+        boxShadow: AppTokens.softShadow(opacity: 0.05),
+      ),
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          Container(
+            height: 40,
+            width: 40,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: gradient),
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: gradient.first.withValues(alpha: 0.18),
+                  blurRadius: 14,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Icon(icon, color: Colors.white, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.25,
+                  ),
                 ),
               ],
             ),
@@ -178,95 +541,3 @@ class _OverviewTabState extends State<OverviewTab> {
     );
   }
 }
-
-class _StatCard extends StatelessWidget {
-  const _StatCard({
-    required this.title,
-    required this.value,
-    required this.icon,
-    required this.onTap,
-  });
-
-  final String title;
-  final String? value;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: AppTokens.r20,
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: AppTokens.r20,
-          border: Border.all(color: AppTokens.brand.withValues(alpha: 0.10)),
-          boxShadow: AppTokens.softShadow(opacity: 0.06),
-        ),
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              height: 42,
-              width: 42,
-              decoration: BoxDecoration(
-                color: AppTokens.brand.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(icon, color: AppTokens.brand),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 4),
-                  Text(
-                    value ?? '…',
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ActionPill extends StatelessWidget {
-  const _ActionPill({required this.icon, required this.label, required this.onTap});
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: AppTokens.pill,
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: AppTokens.brand.withValues(alpha: 0.08),
-          borderRadius: AppTokens.pill,
-          border: Border.all(color: AppTokens.brand.withValues(alpha: 0.14)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 18, color: AppTokens.brand),
-            const SizedBox(width: 10),
-            Text(label, style: const TextStyle(fontWeight: FontWeight.w800)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
