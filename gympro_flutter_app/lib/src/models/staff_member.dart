@@ -14,6 +14,11 @@ class StaffMember {
     this.bio,
     this.specializations = const [],
     this.yearsExperience = 0,
+    this.employeeId,
+    this.hireDate,
+    this.createdAt,
+    this.updatedAt,
+    this.certifications = const [],
   });
 
   final String id;
@@ -28,6 +33,11 @@ class StaffMember {
   final String? bio;
   final List<String> specializations;
   final double yearsExperience;
+  final String? employeeId;
+  final DateTime? hireDate;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+  final List<String> certifications;
 
   String get fullName => '$firstName $lastName'.trim();
 
@@ -38,9 +48,26 @@ class StaffMember {
       return double.tryParse(v.toString());
     }
 
+    DateTime? parseDate(Object? v) {
+      if (v == null) return null;
+      if (v is DateTime) return v;
+      final s = v.toString().trim();
+      if (s.isEmpty) return null;
+      return DateTime.tryParse(s);
+    }
+
     final specsRaw = row['specializations'];
     final specs = specsRaw is List
         ? specsRaw
+            .whereType<Object?>()
+            .map((e) => e?.toString() ?? '')
+            .where((e) => e.trim().isNotEmpty)
+            .toList()
+        : <String>[];
+
+    final certsRaw = row['certifications'];
+    final certs = certsRaw is List
+        ? certsRaw
             .whereType<Object?>()
             .map((e) => e?.toString() ?? '')
             .where((e) => e.trim().isNotEmpty)
@@ -60,6 +87,11 @@ class StaffMember {
       bio: row['bio'] as String?,
       specializations: specs,
       yearsExperience: parseNum(row['years_experience']) ?? 0,
+      employeeId: row['employee_id'] as String?,
+      hireDate: parseDate(row['hire_date']),
+      createdAt: parseDate(row['created_at']),
+      updatedAt: parseDate(row['updated_at']),
+      certifications: certs,
     );
   }
 }

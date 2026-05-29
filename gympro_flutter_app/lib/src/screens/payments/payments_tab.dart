@@ -137,7 +137,7 @@ class _PaymentsTabState extends State<PaymentsTab> {
                         ),
                       ),
                       title: Text(
-                        '${p.currency} ${p.amount.toStringAsFixed(2)}',
+                        '₹${p.amount.toStringAsFixed(2)}',
                         style: const TextStyle(fontWeight: FontWeight.w800),
                       ),
                       subtitle: Text(

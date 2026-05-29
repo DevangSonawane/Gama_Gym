@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../auth/auth_controller.dart';
 import '../../data/members_repository.dart';
+import '../../models/app_user.dart';
 import '../../models/member.dart';
 import '../../ui/app_tokens.dart';
 import '../../ui/empty_state.dart';
@@ -118,6 +119,11 @@ class _MembersTabState extends State<MembersTab> {
 
   @override
   Widget build(BuildContext context) {
+    final canManageMembers =
+        widget.authController.hasRole(AppRole.staff) ||
+        widget.authController.hasRole(AppRole.manager) ||
+        widget.authController.hasRole(AppRole.admin);
+
     final q = _search.text.trim().toLowerCase();
     final bySearch = q.isEmpty
         ? _members
@@ -186,13 +192,17 @@ class _MembersTabState extends State<MembersTab> {
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                onPressed: () => context.go('/members/new'),
+                onPressed: () => context.push('/members/new'),
                 icon: const Icon(Icons.person_add_alt_1),
                 label: const Text(
                   'Add Member',
                   style: TextStyle(fontWeight: FontWeight.w900),
                 ),
               );
+
+              if (!canManageMembers) {
+                return const _MembersHeader();
+              }
 
               if (!narrow) {
                 return Row(
@@ -392,9 +402,10 @@ class _MembersTabState extends State<MembersTab> {
                             member: m,
                             planAccent: _planAccent(m.membershipType),
                             joinDate: _fmtDate(m.createdAt),
-                            onView: () => context.go('/members/${m.id}'),
-                            onEdit: () => context.go('/members/${m.id}/edit'),
+                            onView: () => context.push('/members/${m.id}'),
+                            onEdit: () => context.push('/members/${m.id}/edit'),
                             onDelete: () => _confirmDelete(m.id),
+                            canManage: canManageMembers,
                           ),
                           if (m.id != rows.last.id)
                             Divider(
@@ -457,6 +468,7 @@ class _MemberDirectoryRow extends StatelessWidget {
     required this.onView,
     required this.onEdit,
     required this.onDelete,
+    required this.canManage,
   });
 
   final Member member;
@@ -465,6 +477,7 @@ class _MemberDirectoryRow extends StatelessWidget {
   final VoidCallback onView;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final bool canManage;
 
   @override
   Widget build(BuildContext context) {
@@ -528,7 +541,7 @@ class _MemberDirectoryRow extends StatelessWidget {
                 ],
               ),
             ),
-          if (includeViewEdit)
+          if (includeViewEdit && canManage)
             const PopupMenuItem(
               value: 'edit',
               child: Row(
@@ -539,16 +552,17 @@ class _MemberDirectoryRow extends StatelessWidget {
                 ],
               ),
             ),
-          const PopupMenuItem(
-            value: 'delete',
-            child: Row(
-              children: [
-                Icon(Icons.delete_outline, color: Colors.red),
-                SizedBox(width: 8),
-                Text('Delete Member'),
-              ],
+          if (canManage)
+            const PopupMenuItem(
+              value: 'delete',
+              child: Row(
+                children: [
+                  Icon(Icons.delete_outline, color: Colors.red),
+                  SizedBox(width: 8),
+                  Text('Delete Member'),
+                ],
+              ),
             ),
-          ),
         ],
         icon: const Icon(Icons.more_vert),
       );
@@ -703,18 +717,20 @@ class _MemberDirectoryRow extends StatelessWidget {
                         onPressed: onView,
                         icon: const Icon(Icons.visibility_outlined),
                       ),
-                      IconButton(
-                        tooltip: 'Edit',
-                        visualDensity: VisualDensity.compact,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(
-                          minWidth: 34,
-                          minHeight: 34,
+                      if (canManage) ...[
+                        IconButton(
+                          tooltip: 'Edit',
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 34,
+                            minHeight: 34,
+                          ),
+                          onPressed: onEdit,
+                          icon: const Icon(Icons.edit_outlined),
                         ),
-                        onPressed: onEdit,
-                        icon: const Icon(Icons.edit_outlined),
-                      ),
-                      moreMenu(includeViewEdit: false),
+                        moreMenu(includeViewEdit: false),
+                      ],
                     ],
                   ),
                 ],

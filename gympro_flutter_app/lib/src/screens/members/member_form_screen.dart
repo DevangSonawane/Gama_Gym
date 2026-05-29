@@ -384,7 +384,11 @@ class _MemberFormScreenState extends State<MemberFormScreen> {
         );
       }
       if (!mounted) return;
-      context.go('/dashboard?tab=members');
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/dashboard?tab=members');
+      }
     } catch (e) {
       setState(() => _error = e.toString());
     } finally {
@@ -421,7 +425,9 @@ class _MemberFormScreenState extends State<MemberFormScreen> {
                     subtitle:
                         'Create a new membership account and set up their profile',
                     backLabel: 'Back to Members',
-                    onBack: () => context.go('/dashboard?tab=members'),
+                    onBack: () => context.canPop()
+                        ? context.pop()
+                        : context.go('/dashboard?tab=members'),
                     icon: Icons.person_add_alt_1,
                   ),
                   const SizedBox(height: 16),
@@ -961,63 +967,73 @@ class _MemberFormScreenState extends State<MemberFormScreen> {
                               Row(
                                 children: [
                                   Expanded(
-                                    child: FilledButton(
-                                      style: FilledButton.styleFrom(
-                                        backgroundColor: AppTokens.brand,
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 14,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            16,
+                                    child: SizedBox(
+                                      height: 48,
+                                      child: FilledButton(
+                                        style: FilledButton.styleFrom(
+                                          backgroundColor: AppTokens.brand,
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 14,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              16,
+                                            ),
                                           ),
                                         ),
+                                        onPressed: _loading ? null : _submit,
+                                        child: _loading
+                                            ? const SizedBox(
+                                                height: 18,
+                                                width: 18,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                      color: Colors.white,
+                                                    ),
+                                              )
+                                            : Text(
+                                                widget.memberId == null
+                                                    ? 'Create'
+                                                    : 'Save Changes',
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w800,
+                                                ),
+                                              ),
                                       ),
-                                      onPressed: _loading ? null : _submit,
-                                      child: _loading
-                                          ? const SizedBox(
-                                              height: 18,
-                                              width: 18,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                color: Colors.white,
-                                              ),
-                                            )
-                                          : Text(
-                                              widget.memberId == null
-                                                  ? 'Create Member Account'
-                                                  : 'Save Changes',
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w800,
-                                              ),
-                                            ),
                                     ),
                                   ),
                                   const SizedBox(width: 10),
                                   Expanded(
-                                    child: OutlinedButton(
-                                      style: OutlinedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 14,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            16,
+                                    child: SizedBox(
+                                      height: 48,
+                                      child: OutlinedButton(
+                                        style: OutlinedButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 14,
                                           ),
-                                        ),
-                                        side: BorderSide(
-                                          color: Colors.black.withValues(
-                                            alpha: 0.12,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              16,
+                                            ),
                                           ),
+                                          side: BorderSide(
+                                            color: Colors.black.withValues(
+                                              alpha: 0.12,
+                                            ),
+                                          ),
+                                          foregroundColor: Colors.black87,
                                         ),
-                                        foregroundColor: Colors.black87,
-                                      ),
-                                      onPressed: () =>
-                                          context.go('/dashboard?tab=members'),
-                                      child: const Text(
-                                        'Cancel',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w800,
+                                        onPressed: () => context.canPop()
+                                            ? context.pop()
+                                            : context.go(
+                                                '/dashboard?tab=members',
+                                              ),
+                                        child: const Text(
+                                          'Cancel',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w800,
+                                          ),
                                         ),
                                       ),
                                     ),

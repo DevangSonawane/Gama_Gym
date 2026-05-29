@@ -58,6 +58,12 @@ class _AnalyticsTabState extends State<AnalyticsTab> {
       final members = await _db.from('members').select('*');
       final payments = await _db.from('payments').select('*');
       final classes = await _db.from('classes').select('*');
+      List<dynamic> schedules = const [];
+      try {
+        schedules = await _db.from('class_schedules').select('*');
+      } catch (_) {
+        // class_schedules table is optional in some environments
+      }
       List<dynamic> bookings = const [];
       try {
         bookings = await _db.from('bookings').select('*');
@@ -70,6 +76,7 @@ class _AnalyticsTabState extends State<AnalyticsTab> {
         members: (members as List).cast<Map<String, dynamic>>(),
         payments: (payments as List).cast<Map<String, dynamic>>(),
         classes: (classes as List).cast<Map<String, dynamic>>(),
+        schedules: schedules.cast<Map<String, dynamic>>(),
         bookings: bookings.cast<Map<String, dynamic>>(),
         staff: (staff as List).cast<Map<String, dynamic>>(),
         period: _period,
@@ -91,6 +98,7 @@ class _AnalyticsTabState extends State<AnalyticsTab> {
     required List<Map<String, dynamic>> members,
     required List<Map<String, dynamic>> payments,
     required List<Map<String, dynamic>> classes,
+    required List<Map<String, dynamic>> schedules,
     required List<Map<String, dynamic>> bookings,
     required List<Map<String, dynamic>> staff,
     required String period,
@@ -114,6 +122,19 @@ class _AnalyticsTabState extends State<AnalyticsTab> {
       return double.tryParse(v.toString()) ?? 0;
     }
 
+    int parseInt(Object? v) {
+      if (v == null) return 0;
+      if (v is int) return v;
+      if (v is num) return v.round();
+      return int.tryParse(v.toString()) ?? 0;
+    }
+
+    double? parseDouble(Object? v) {
+      if (v == null) return null;
+      if (v is num) return v.toDouble();
+      return double.tryParse(v.toString());
+    }
+
     // Members
     final totalMembers = members.length;
     final activeMembers = members
@@ -135,20 +156,31 @@ class _AnalyticsTabState extends State<AnalyticsTab> {
     }
 
     // Revenue
-    final totalRevenue = payments.fold<double>(
-      0,
-      (sum, p) => sum + parseMoney(p['amount']),
-    );
+    bool isCompleted(Map<String, dynamic> p) {
+      final st = (p['status'] ?? '').toString().trim().toUpperCase();
+      if (st.isEmpty) return true;
+      return st == 'COMPLETED' || st == 'PAID' || st == 'SUCCESS';
+    }
+
+    DateTime? paymentDate(Map<String, dynamic> p) =>
+        parseDate(p['paid_date']) ?? parseDate(p['created_at']);
+
+    final totalRevenue = payments
+        .where(isCompleted)
+        .fold<double>(0, (sum, p) => sum + parseMoney(p['amount']));
+
     final monthlyRevenue = payments
+        .where(isCompleted)
         .where((p) {
-          final dt = parseDate(p['created_at']);
-          return dt != null && dt.isAfter(startOfMonth);
+          final dt = paymentDate(p);
+          return dt != null && !dt.isBefore(startOfMonth);
         })
         .fold<double>(0, (sum, p) => sum + parseMoney(p['amount']));
 
     final prevMonthlyRevenue = payments
+        .where(isCompleted)
         .where((p) {
-          final dt = parseDate(p['created_at']);
+          final dt = paymentDate(p);
           if (dt == null) return false;
           return dt.isAfter(startOfPrevMonth) && dt.isBefore(startOfMonth);
         })
@@ -178,37 +210,112 @@ class _AnalyticsTabState extends State<AnalyticsTab> {
 
     // Classes
     final totalClasses = classes.length;
+    final capacityByClassId = <String, int>{};
+    final nameByClassId = <String, String>{};
+    final instructorByClassId = <String, String?>{};
+    for (final c in classes) {
+      final id = (c['id'] as String?) ?? '';
+      if (id.isEmpty) continue;
+      capacityByClassId[id] = parseInt(c['capacity']).clamp(0, 100000);
+      nameByClassId[id] = (c['name'] ?? 'Class').toString();
+      instructorByClassId[id] = c['instructor_id'] as String?;
+    }
+
+    bool isCancelledSchedule(Map<String, dynamic> s) {
+      final st = (s['status'] ?? '').toString().trim().toLowerCase();
+      return st == 'cancelled' || st == 'canceled';
+    }
+
+    final schedulesInPeriod = schedules.where((s) {
+      final dt = parseDate(s['date']) ?? parseDate(s['created_at']);
+      return dt != null && !dt.isBefore(start) && !isCancelledSchedule(s);
+    }).toList();
+
+    int totalCapacitySpots = 0;
+    int totalBookedSpots = 0;
+    final bookedByClassId = <String, int>{};
+    final sessionsByClassId = <String, int>{};
+    for (final s in schedulesInPeriod) {
+      final classId = (s['class_id'] as String?) ?? '';
+      if (classId.isEmpty) continue;
+      final cap = capacityByClassId[classId] ?? 0;
+      final booked = parseInt(s['booked_count']).clamp(0, 100000);
+      totalCapacitySpots += cap;
+      totalBookedSpots += math.min(booked, cap);
+      bookedByClassId[classId] = (bookedByClassId[classId] ?? 0) + booked;
+      sessionsByClassId[classId] = (sessionsByClassId[classId] ?? 0) + 1;
+    }
+
+    final classUtilization = totalCapacitySpots <= 0
+        ? 0
+        : ((totalBookedSpots / totalCapacitySpots) * 100).round().clamp(0, 100);
+
+    final averageAttendance = schedulesInPeriod.isEmpty
+        ? 0
+        : ((totalBookedSpots / schedulesInPeriod.length) /
+                  (totalCapacitySpots / schedulesInPeriod.length) *
+                  100)
+              .round()
+              .clamp(0, 100);
+
+    final popularClasses = () {
+      final entries = <({String id, int score})>[];
+      for (final id in nameByClassId.keys) {
+        final score = bookedByClassId[id] ?? sessionsByClassId[id] ?? 0;
+        entries.add((id: id, score: score));
+      }
+      entries.sort((a, b) => b.score.compareTo(a.score));
+      return entries.take(5).map((e) {
+        return (name: nameByClassId[e.id] ?? 'Class', bookings: e.score);
+      }).toList();
+    }();
+
     final bookingsInPeriod = bookings.where((b) {
       final dt = parseDate(b['created_at']);
-      return dt != null && dt.isAfter(start);
-    }).length;
-
-    // We don't currently model class attendance in DB; approximate utilization.
-    final classUtilization = totalClasses == 0
+      return dt != null && !dt.isBefore(start);
+    }).toList();
+    final averageVisitsPerMember = (activeMembers <= 0)
         ? 0
-        : math.min(100, (bookingsInPeriod / (totalClasses * 8)) * 100).round();
-    final averageAttendance = math.min(100, (classUtilization * 0.85).round());
-
-    // Popular classes (fallback to 0 bookings if we can't join schedules->bookings).
-    final popularClasses = classes
-        .take(5)
-        .map((c) => (name: (c['name'] ?? 'Class').toString(), bookings: 0))
-        .toList();
+        : (bookingsInPeriod.isEmpty
+              ? 0
+              : (bookingsInPeriod.length / activeMembers).round());
 
     // Trainers
-    final trainers = staff
-        .where((s) => (s['role'] ?? '').toString() == 'trainer')
-        .toList();
+    final trainers = staff.where((s) {
+      final v = (s['role'] ?? '').toString();
+      final role = parseAppRole(v);
+      return role == AppRole.trainer;
+    }).toList();
     final totalTrainers = trainers.length;
-    final averageRating = totalTrainers == 0 ? 0.0 : 4.6;
-    final topPerformers = trainers.take(5).map((t) {
+    final trainerRatings = trainers
+        .map((t) => parseDouble(t['rating']) ?? parseDouble(t['avg_rating']))
+        .whereType<double>()
+        .toList();
+    final averageRating = trainerRatings.isEmpty
+        ? null
+        : (trainerRatings.reduce((a, b) => a + b) / trainerRatings.length);
+
+    final sessionsByTrainerId = <String, int>{};
+    for (final s in schedulesInPeriod) {
+      final classId = (s['class_id'] as String?) ?? '';
+      if (classId.isEmpty) continue;
+      final trainerId = instructorByClassId[classId];
+      if (trainerId == null || trainerId.trim().isEmpty) continue;
+      sessionsByTrainerId[trainerId] =
+          (sessionsByTrainerId[trainerId] ?? 0) + 1;
+    }
+
+    final topPerformers = trainers.map((t) {
       final first = (t['first_name'] ?? '').toString();
       final last = (t['last_name'] ?? '').toString();
       final name = ('$first $last').trim().isEmpty
           ? 'Trainer'
           : ('$first $last').trim();
-      return (name: name, rating: 4.8, classes: 12);
-    }).toList();
+      final id = (t['id'] as String?) ?? '';
+      final rating = parseDouble(t['rating']) ?? parseDouble(t['avg_rating']);
+      final sessions = id.isEmpty ? 0 : (sessionsByTrainerId[id] ?? 0);
+      return (name: name, rating: rating, classes: sessions);
+    }).toList()..sort((a, b) => b.classes.compareTo(a.classes));
 
     // Metric cards
     final lastMonthMembers = members.where((m) {
@@ -222,7 +329,7 @@ class _AnalyticsTabState extends State<AnalyticsTab> {
       return dt.isAfter(startOfPrevPrevMonth) && dt.isBefore(startOfPrevMonth);
     }).length;
     final membersGrowth = prevLastMonthMembers <= 0
-        ? (lastMonthMembers > 0 ? 12 : 0)
+        ? (lastMonthMembers > 0 ? 100 : 0)
         : (((lastMonthMembers - prevLastMonthMembers) / prevLastMonthMembers) *
                   100)
               .round();
@@ -234,7 +341,7 @@ class _AnalyticsTabState extends State<AnalyticsTab> {
         activeMembers: activeMembers,
         newMembersThisMonth: newMembersThisMonth,
         retentionRate: retentionRate,
-        averageVisitsPerMember: 0,
+        averageVisitsPerMember: averageVisitsPerMember,
         membershipDistribution: membershipDistribution,
         membersGrowth: membersGrowth,
       ),
@@ -254,7 +361,7 @@ class _AnalyticsTabState extends State<AnalyticsTab> {
       trainerStats: _TrainerStats(
         totalTrainers: totalTrainers,
         averageRating: averageRating,
-        topPerformers: topPerformers,
+        topPerformers: topPerformers.take(5).toList(),
       ),
     );
   }
@@ -421,8 +528,7 @@ class _AnalyticsTabState extends State<AnalyticsTab> {
                     ),
                     _AnalyticsStatTile(
                       title: 'Monthly Revenue',
-                      value:
-                          '\$${data.revenueStats.monthlyRevenue.toStringAsFixed(0)}',
+                      value: _fmtInr0(data.revenueStats.monthlyRevenue),
                       accent: const Color(0xFF10B981),
                       changeText:
                           '+${data.revenueStats.revenueGrowth}% vs last month',
@@ -527,6 +633,14 @@ class _AnalyticsStatTile extends StatelessWidget {
       ),
     );
   }
+}
+
+String _fmtInr0(num v) => '₹${_fmtInt(v.round())}';
+
+String _fmtInt(int v) {
+  final s = v.toString();
+  final re = RegExp(r'(\d)(?=(\d{3})+(?!\d))');
+  return s.replaceAllMapped(re, (m) => '${m[1]},');
 }
 
 class _MembersAnalyticsView extends StatelessWidget {
@@ -661,7 +775,7 @@ class _RevenueAnalyticsView extends StatelessWidget {
                 child: Column(
                   children: [
                     Text(
-                      '\$${data.revenueStats.totalRevenue.toStringAsFixed(0)}',
+                      _fmtInr0(data.revenueStats.totalRevenue),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 34,
@@ -690,13 +804,11 @@ class _RevenueAnalyticsView extends StatelessWidget {
                 childAspectRatio: 1.8,
                 children: [
                   _MiniStat(
-                    value:
-                        '\$${data.revenueStats.monthlyRevenue.toStringAsFixed(0)}',
+                    value: _fmtInr0(data.revenueStats.monthlyRevenue),
                     label: 'This Month',
                   ),
                   _MiniStat(
-                    value:
-                        '\$${data.revenueStats.outstandingPayments.toStringAsFixed(0)}',
+                    value: _fmtInr0(data.revenueStats.outstandingPayments),
                     label: 'Outstanding',
                   ),
                 ],
@@ -734,7 +846,7 @@ class _RevenueAnalyticsView extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '\$${entry.value.toStringAsFixed(0)}',
+                        _fmtInr0(entry.value),
                         style: const TextStyle(
                           fontWeight: FontWeight.w900,
                           color: AppTokens.brand,
@@ -896,8 +1008,9 @@ class _TrainersAnalyticsView extends StatelessWidget {
                 label: 'Total Trainers',
               ),
               _MiniStat(
-                value:
-                    '${data.trainerStats.averageRating.toStringAsFixed(1)} ★',
+                value: data.trainerStats.averageRating == null
+                    ? '—'
+                    : '${data.trainerStats.averageRating!.toStringAsFixed(1)} ★',
                 label: 'Avg. Rating',
               ),
             ],
@@ -952,24 +1065,27 @@ class _TrainersAnalyticsView extends StatelessWidget {
                           style: const TextStyle(fontWeight: FontWeight.w800),
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFEF3C7),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          '★ ${data.trainerStats.topPerformers[i].rating.toStringAsFixed(1)}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w900,
-                            color: Color(0xFFB45309),
+                      if (data.trainerStats.topPerformers[i].rating !=
+                          null) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEF3C7),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '★ ${data.trainerStats.topPerformers[i].rating!.toStringAsFixed(1)}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFFB45309),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
+                        const SizedBox(width: 10),
+                      ],
                       Text(
                         '${data.trainerStats.topPerformers[i].classes} classes',
                         style: TextStyle(
@@ -1219,6 +1335,6 @@ class _TrainerStats {
   });
 
   final int totalTrainers;
-  final double averageRating;
-  final List<({String name, double rating, int classes})> topPerformers;
+  final double? averageRating;
+  final List<({String name, double? rating, int classes})> topPerformers;
 }

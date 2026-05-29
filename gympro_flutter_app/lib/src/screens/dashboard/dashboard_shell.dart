@@ -81,7 +81,12 @@ class DashboardShell extends StatelessWidget {
             label: 'Members',
             icon: Icons.people_outline,
             tab: 'members',
-            roles: [AppRole.staff, AppRole.manager, AppRole.admin],
+            roles: [
+              AppRole.trainer,
+              AppRole.staff,
+              AppRole.manager,
+              AppRole.admin,
+            ],
           ),
           const _NavItem(
             id: 'classes',
@@ -141,44 +146,64 @@ class DashboardShell extends StatelessWidget {
           }
         }
 
-        return Scaffold(
-          backgroundColor: AppTokens.pageBg,
-          appBar: AppBar(
-            centerTitle: false,
-            titleSpacing: 0,
-            title: Align(
-              alignment: Alignment.centerLeft,
-              child: Image.asset(
-                'assets/images/gamalog.png',
-                height: 90,
-                fit: BoxFit.contain,
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, _) {
+            if (didPop) return;
+
+            final r = GoRouter.of(context);
+            if (r.canPop()) {
+              r.pop();
+              return;
+            }
+
+            if (activeTab != 'overview') {
+              context.go('/dashboard?tab=overview');
+              return;
+            }
+
+            // Allow app to close from overview by popping the root.
+            Navigator.of(context).maybePop();
+          },
+          child: Scaffold(
+            backgroundColor: AppTokens.pageBg,
+            appBar: AppBar(
+              centerTitle: false,
+              titleSpacing: 0,
+              title: Align(
                 alignment: Alignment.centerLeft,
-              ),
-            ),
-            actions: [
-              IconButton(
-                tooltip: 'Profile',
-                onPressed: () => authController.hasRole(AppRole.admin)
-                    ? context.go('/users')
-                    : context.go('/dashboard?tab=overview'),
-                icon: const Icon(Icons.account_circle_outlined),
-              ),
-              IconButton(
-                tooltip: 'Logout',
-                onPressed: authController.logout,
-                icon: const Icon(Icons.logout),
-              ),
-              const SizedBox(width: 4),
-            ],
-          ),
-          body: SafeArea(bottom: false, child: buildBody()),
-          bottomNavigationBar: isWide
-              ? null
-              : _FloatingPillNav(
-                  items: items,
-                  selectedIndex: safeIndex,
-                  onSelected: (i) => goTab(items[i].tab),
+                child: Image.asset(
+                  'assets/images/gamalog.png',
+                  height: 90,
+                  fit: BoxFit.contain,
+                  alignment: Alignment.centerLeft,
                 ),
+              ),
+              actions: [
+                IconButton(
+                  tooltip: 'Profile',
+                  onPressed: () => authController.hasRole(AppRole.admin)
+                      ? context.push('/users')
+                      : context.go('/dashboard?tab=overview'),
+                  icon: const Icon(Icons.account_circle_outlined),
+                ),
+                IconButton(
+                  tooltip: 'Logout',
+                  onPressed: authController.logout,
+                  icon: const Icon(Icons.logout),
+                ),
+                const SizedBox(width: 4),
+              ],
+            ),
+            body: SafeArea(bottom: false, child: buildBody()),
+            bottomNavigationBar: isWide
+                ? null
+                : _FloatingPillNav(
+                    items: items,
+                    selectedIndex: safeIndex,
+                    onSelected: (i) => goTab(items[i].tab),
+                  ),
+          ),
         );
       },
     );

@@ -142,7 +142,6 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
             LayoutBuilder(
               builder: (context, constraints) {
                 final narrow = constraints.maxWidth < 520;
-                final veryNarrow = constraints.maxWidth < 360;
 
                 final back = OutlinedButton(
                   style: OutlinedButton.styleFrom(
@@ -156,46 +155,30 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                     minimumSize: const Size(44, 44),
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                   ),
-                  onPressed: () => context.go('/dashboard?tab=members'),
+                  onPressed: () =>
+                      context.canPop() ? context.pop() : context.go('/dashboard?tab=members'),
                   child: const Icon(Icons.arrow_back, size: 18),
                 );
 
-                final edit = veryNarrow
-                    ? SizedBox(
-                        height: 44,
-                        child: FilledButton(
-                          style: FilledButton.styleFrom(
-                            backgroundColor: AppTokens.brand,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 14),
-                          ),
-                          onPressed: () =>
-                              context.go('/members/${widget.memberId}/edit'),
-                          child: const Icon(Icons.edit_outlined),
-                        ),
-                      )
-                    : FilledButton.icon(
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppTokens.brand,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          minimumSize: const Size(0, 44),
-                        ),
-                        onPressed: () =>
-                            context.go('/members/${widget.memberId}/edit'),
-                        icon: const Icon(Icons.edit_outlined),
-                        label: const Text('Edit Profile'),
-                      );
+                final edit = SizedBox(
+                  height: 38,
+                  width: 38,
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppTokens.brand,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: EdgeInsets.zero,
+                    ),
+                    onPressed: () =>
+                        context.push('/members/${widget.memberId}/edit'),
+                    child: const Icon(Icons.edit_outlined, size: 18),
+                  ),
+                );
 
                 final actionsRow = Row(
-                  children: [
-                    back,
-                    const Spacer(),
-                    if (canEdit) Flexible(child: edit),
-                  ],
+                  children: [back, const Spacer(), if (canEdit) edit],
                 );
 
                 final titleBlock = Row(
@@ -653,7 +636,7 @@ class _MembershipPlanCard extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                '\$${monthlyFee.toStringAsFixed(2)}',
+                                '₹${_fmtInt(monthlyFee.round())}',
                                 style: const TextStyle(
                                   color: AppTokens.brand,
                                   fontWeight: FontWeight.w900,
@@ -727,4 +710,10 @@ class _MembershipPlanCard extends StatelessWidget {
       ),
     );
   }
+}
+
+String _fmtInt(int v) {
+  final s = v.toString();
+  final re = RegExp(r'(\d)(?=(\d{3})+(?!\d))');
+  return s.replaceAllMapped(re, (m) => '${m[1]},');
 }

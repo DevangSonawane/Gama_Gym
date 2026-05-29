@@ -387,12 +387,12 @@ class _PaymentCreateScreenState extends State<PaymentCreateScreen> {
                             children: [
                               _AmountRow(
                                 label: 'Subtotal',
-                                value: 'INR ${_amountValue.toStringAsFixed(2)}',
+                                value: '₹${_amountValue.toStringAsFixed(2)}',
                               ),
                               const SizedBox(height: 6),
                               const _AmountRow(
                                 label: 'Tax (0%)',
-                                value: 'INR 0.00',
+                                value: '₹0.00',
                               ),
                               const SizedBox(height: 10),
                               Container(
@@ -402,7 +402,7 @@ class _PaymentCreateScreenState extends State<PaymentCreateScreen> {
                               const SizedBox(height: 10),
                               _AmountRow(
                                 label: 'Total',
-                                value: 'INR ${_amountValue.toStringAsFixed(2)}',
+                                value: '₹${_amountValue.toStringAsFixed(2)}',
                                 isTotal: true,
                               ),
                             ],

@@ -183,7 +183,11 @@ class _ClassCreateScreenState extends State<ClassCreateScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Class created successfully!')),
       );
-      context.go('/dashboard?tab=classes');
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/dashboard?tab=classes');
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -215,14 +219,18 @@ class _ClassCreateScreenState extends State<ClassCreateScreen> {
           ? Center(child: Text(_error!))
           : SafeArea(
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                // Extra bottom padding so the last card isn't obscured on small
+                // screens (system gesture area / overlays).
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
                 children: [
                   ReactPageHeader(
                     title: 'Create New Class',
                     subtitle:
                         'Set up a new fitness class, schedule, and capacity.',
                     backLabel: 'Back to Classes',
-                    onBack: () => context.go('/dashboard?tab=classes'),
+                    onBack: () => context.canPop()
+                        ? context.pop()
+                        : context.go('/dashboard?tab=classes'),
                     icon: Icons.auto_awesome_outlined,
                   ),
                   const SizedBox(height: 16),
@@ -717,9 +725,11 @@ class _ClassCreateScreenState extends State<ClassCreateScreen> {
                                   ),
                                   onPressed: _submitting
                                       ? null
-                                      : () => context.go(
-                                          '/dashboard?tab=classes',
-                                        ),
+                                      : () => context.canPop()
+                                          ? context.pop()
+                                          : context.go(
+                                              '/dashboard?tab=classes',
+                                            ),
                                   child: const Text(
                                     'Cancel',
                                     style: TextStyle(

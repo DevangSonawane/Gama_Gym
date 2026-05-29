@@ -101,7 +101,7 @@ class _StaffTabState extends State<StaffTab> {
                       vertical: 14,
                     ),
                   ),
-                  onPressed: () => context.go('/staff/new'),
+                  onPressed: () => context.push('/staff/new'),
                   child: const Icon(Icons.person_add_alt_1),
                 ),
             ],
@@ -166,7 +166,7 @@ class _StaffTabState extends State<StaffTab> {
                       ),
                       isThreeLine: true,
                       trailing: const Icon(Icons.chevron_right),
-                      onTap: () => context.go('/staff/${s.id}'),
+                      onTap: () => context.push('/staff/${s.id}'),
                     ),
                     if (s.id != rows.last.id)
                       Divider(

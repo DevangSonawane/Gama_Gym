@@ -210,7 +210,7 @@ class OverviewTabState extends State<OverviewTab> {
                       ? null
                       : (_monthlyRevenue == null
                             ? '—'
-                            : 'INR ${_fmtMoney0(_monthlyRevenue!)}'),
+                            : '₹${_fmtMoney0(_monthlyRevenue!)}'),
                   icon: Icons.payments_outlined,
                   gradient: const [Color(0xFF10B981), Color(0xFF14B8A6)],
                   onTap: () => context.go('/dashboard?tab=payments'),

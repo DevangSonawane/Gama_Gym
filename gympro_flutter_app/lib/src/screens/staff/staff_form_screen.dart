@@ -9,7 +9,11 @@ import '../../ui/empty_state.dart';
 import '../../ui/react_cards.dart';
 
 class StaffFormScreen extends StatefulWidget {
-  const StaffFormScreen({super.key, required this.authController, this.staffId});
+  const StaffFormScreen({
+    super.key,
+    required this.authController,
+    this.staffId,
+  });
 
   final AuthController authController;
   final String? staffId;
@@ -122,7 +126,11 @@ class _StaffFormScreenState extends State<StaffFormScreen> {
         );
       }
       if (!mounted) return;
-      context.go('/dashboard?tab=staff');
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/dashboard?tab=staff');
+      }
     } catch (e) {
       setState(() => _error = e.toString());
     } finally {
@@ -132,7 +140,9 @@ class _StaffFormScreenState extends State<StaffFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final title = widget.staffId == null ? 'Add Staff Member' : 'Edit Staff Member';
+    final title = widget.staffId == null
+        ? 'Add Staff Member'
+        : 'Edit Staff Member';
     final isWide = MediaQuery.of(context).size.width >= 980;
 
     if (!_allowed) {
@@ -147,10 +157,7 @@ class _StaffFormScreenState extends State<StaffFormScreen> {
 
     return Scaffold(
       backgroundColor: AppTokens.pageBg,
-      appBar: AppBar(
-        title: const Text(''),
-        toolbarHeight: 0,
-      ),
+      appBar: AppBar(title: const Text(''), toolbarHeight: 0),
       body: _loading && widget.staffId != null
           ? const Center(child: CircularProgressIndicator())
           : SafeArea(
@@ -161,7 +168,8 @@ class _StaffFormScreenState extends State<StaffFormScreen> {
                     title: title,
                     subtitle: 'Onboard a new employee, trainer, or manager.',
                     backLabel: 'Back to Staff',
-                    onBack: () => context.go('/dashboard?tab=staff'),
+                    onBack: () =>
+                        context.canPop() ? context.pop() : context.go('/dashboard?tab=staff'),
                     icon: Icons.person_add_alt_1,
                   ),
                   const SizedBox(height: 16),
@@ -215,8 +223,8 @@ class _StaffFormScreenState extends State<StaffFormScreen> {
                                       ),
                                       validator: (v) =>
                                           (v == null || v.trim().isEmpty)
-                                              ? 'Required'
-                                              : null,
+                                          ? 'Required'
+                                          : null,
                                     ),
                                   ),
                                   const SizedBox(width: 12),
@@ -229,8 +237,8 @@ class _StaffFormScreenState extends State<StaffFormScreen> {
                                       ),
                                       validator: (v) =>
                                           (v == null || v.trim().isEmpty)
-                                              ? 'Required'
-                                              : null,
+                                          ? 'Required'
+                                          : null,
                                     ),
                                   ),
                                 ],
@@ -245,8 +253,8 @@ class _StaffFormScreenState extends State<StaffFormScreen> {
                                 keyboardType: TextInputType.emailAddress,
                                 validator: (v) =>
                                     (v == null || v.trim().isEmpty)
-                                        ? 'Required'
-                                        : null,
+                                    ? 'Required'
+                                    : null,
                               ),
                               const SizedBox(height: 12),
                               TextFormField(
@@ -277,8 +285,8 @@ class _StaffFormScreenState extends State<StaffFormScreen> {
                                 ),
                                 validator: (v) =>
                                     (v == null || v.trim().isEmpty)
-                                        ? 'Required'
-                                        : null,
+                                    ? 'Required'
+                                    : null,
                               ),
                               const SizedBox(height: 12),
                               DropdownButtonFormField<String>(
@@ -289,10 +297,7 @@ class _StaffFormScreenState extends State<StaffFormScreen> {
                                 ),
                                 items: [
                                   for (final d in departments)
-                                    DropdownMenuItem(
-                                      value: d,
-                                      child: Text(d),
-                                    ),
+                                    DropdownMenuItem(value: d, child: Text(d)),
                                 ],
                                 onChanged: (v) => setState(
                                   () => _department = v ?? 'Fitness',
@@ -338,13 +343,12 @@ class _StaffFormScreenState extends State<StaffFormScreen> {
                                 controller: _salary,
                                 keyboardType: TextInputType.number,
                                 decoration: const InputDecoration(
-                                  labelText: 'Annual Salary (\$)',
+                                  labelText: 'Annual Salary (₹)',
                                   hintText: '0.00',
                                   border: OutlineInputBorder(),
                                 ),
                                 validator: (v) {
-                                  final n =
-                                      double.tryParse(v?.trim() ?? '');
+                                  final n = double.tryParse(v?.trim() ?? '');
                                   if (n == null) return 'Required';
                                   if (n < 0) return 'Invalid';
                                   return null;
@@ -355,10 +359,14 @@ class _StaffFormScreenState extends State<StaffFormScreen> {
                                 width: double.infinity,
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
-                                  color: AppTokens.brand.withValues(alpha: 0.06),
+                                  color: AppTokens.brand.withValues(
+                                    alpha: 0.06,
+                                  ),
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                    color: AppTokens.brand.withValues(alpha: 0.12),
+                                    color: AppTokens.brand.withValues(
+                                      alpha: 0.12,
+                                    ),
                                   ),
                                 ),
                                 child: const Text(
@@ -488,7 +496,10 @@ class _SummaryRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: TextStyle(color: muted, fontWeight: FontWeight.w700)),
+        Text(
+          label,
+          style: TextStyle(color: muted, fontWeight: FontWeight.w700),
+        ),
         Text(value, style: const TextStyle(fontWeight: FontWeight.w900)),
       ],
     );

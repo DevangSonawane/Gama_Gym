@@ -100,7 +100,9 @@ class _ClassesTabState extends State<ClassesTab> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('You are about to book a spot in ${schedule.gymClass.name}.'),
+              Text(
+                'You are about to book a spot in ${schedule.gymClass.name}.',
+              ),
               const SizedBox(height: 12),
               _DialogRow(
                 label: 'Date',
@@ -118,9 +120,12 @@ class _ClassesTabState extends State<ClassesTab> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Total', style: TextStyle(fontWeight: FontWeight.w800)),
+                  const Text(
+                    'Total',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
                   Text(
-                    'INR ${schedule.gymClass.price.toStringAsFixed(0)}',
+                    '₹${schedule.gymClass.price.toStringAsFixed(0)}',
                     style: const TextStyle(
                       fontWeight: FontWeight.w900,
                       color: AppTokens.brand,
@@ -180,9 +185,7 @@ class _ClassesTabState extends State<ClassesTab> {
                           const SizedBox(width: 10),
                           Text(
                             'Class Schedule',
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineSmall
+                            style: Theme.of(context).textTheme.headlineSmall
                                 ?.copyWith(fontWeight: FontWeight.w900),
                           ),
                         ],
@@ -210,7 +213,7 @@ class _ClassesTabState extends State<ClassesTab> {
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    onPressed: () => context.go('/classes/new'),
+                    onPressed: () => context.push('/classes/new'),
                     icon: const Icon(Icons.add),
                     label: const Text('Create'),
                   ),
@@ -225,8 +228,9 @@ class _ClassesTabState extends State<ClassesTab> {
                   final categoryItems = _categories;
 
                   final categoryDropdown = DropdownButtonFormField<String>(
-                    initialValue:
-                        categoryItems.contains(_category) ? _category : 'all',
+                    initialValue: categoryItems.contains(_category)
+                        ? _category
+                        : 'all',
                     decoration: InputDecoration(
                       labelText: 'Category',
                       filled: true,
@@ -319,8 +323,10 @@ class _ClassesTabState extends State<ClassesTab> {
                       childAspectRatio: isWide ? 1.25 : 1.05,
                     ),
                     itemCount: schedules.length,
-                    itemBuilder: (context, i) =>
-                        _ScheduleCard(schedule: schedules[i], onBook: _openBooking),
+                    itemBuilder: (context, i) => _ScheduleCard(
+                      schedule: schedules[i],
+                      onBook: _openBooking,
+                    ),
                   );
                 },
               ),
@@ -383,11 +389,7 @@ class _ScheduleCard extends StatelessWidget {
                               const SizedBox(height: 6),
                               Row(
                                 children: [
-                                  Icon(
-                                    Icons.schedule,
-                                    size: 16,
-                                    color: muted,
-                                  ),
+                                  Icon(Icons.schedule, size: 16, color: muted),
                                   const SizedBox(width: 6),
                                   Expanded(
                                     child: Text(
@@ -411,7 +413,7 @@ class _ScheduleCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
-                              'INR ${gymClass.price.toStringAsFixed(0)}',
+                              '₹${gymClass.price.toStringAsFixed(0)}',
                               style: const TextStyle(
                                 color: AppTokens.brand,
                                 fontWeight: FontWeight.w900,
@@ -466,7 +468,8 @@ class _ScheduleCard extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  gymClass.instructor?.fullName ?? 'Unknown Trainer',
+                                  gymClass.instructor?.fullName ??
+                                      'Unknown Trainer',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
@@ -521,9 +524,9 @@ class _ScheduleCard extends StatelessWidget {
                         Expanded(
                           child: RichText(
                             text: TextSpan(
-                              style: DefaultTextStyle.of(context).style.copyWith(
-                                    fontSize: 13,
-                                  ),
+                              style: DefaultTextStyle.of(
+                                context,
+                              ).style.copyWith(fontSize: 13),
                               children: [
                                 TextSpan(
                                   text: '${schedule.bookedCount}',
@@ -655,7 +658,10 @@ class _DialogRow extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: Text(value, style: const TextStyle(fontWeight: FontWeight.w800)),
+            child: Text(
+              value,
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
           ),
         ],
       ),
