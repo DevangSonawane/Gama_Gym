@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../auth/auth_controller.dart';
 import '../../data/staff_repository.dart';
+import '../../models/app_user.dart';
 import '../../models/staff_member.dart';
 import '../../ui/app_search.dart';
 import '../../ui/app_surfaces.dart';
@@ -89,18 +90,20 @@ class _StaffTabState extends State<StaffTab> {
                 ),
               ),
               const SizedBox(width: 12),
-              FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppTokens.brand,
-                  shape: RoundedRectangleBorder(borderRadius: AppTokens.pill),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
+              if (widget.authController.hasRole(AppRole.manager) ||
+                  widget.authController.hasRole(AppRole.admin))
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppTokens.brand,
+                    shape: RoundedRectangleBorder(borderRadius: AppTokens.pill),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
                   ),
+                  onPressed: () => context.go('/staff/new'),
+                  child: const Icon(Icons.person_add_alt_1),
                 ),
-                onPressed: () => context.go('/staff/new'),
-                child: const Icon(Icons.person_add_alt_1),
-              ),
             ],
           ),
           const SizedBox(height: 16),

@@ -26,6 +26,10 @@ class StaffRepository {
     required String department,
     required String position,
     String? phone,
+    required double salary,
+    String? bio,
+    List<String> specializations = const [],
+    double yearsExperience = 0,
   }) async {
     final gymId = GymContext.defaultGymId;
     if (gymId.isEmpty) {
@@ -44,12 +48,12 @@ class StaffRepository {
       'position': position,
       'department': department,
       'role': role.name.toUpperCase(),
-      'salary': '0',
+      'salary': salary.toString(),
       'hire_date': DateTime.now().toIso8601String().split('T').first,
       'certifications': [],
-      'specializations': [],
-      'bio': null,
-      'years_experience': 0,
+      'specializations': specializations,
+      'bio': (bio == null || bio.trim().isEmpty) ? null : bio.trim(),
+      'years_experience': yearsExperience,
     });
   }
 
@@ -62,6 +66,10 @@ class StaffRepository {
     required String department,
     required String position,
     String? phone,
+    required double salary,
+    String? bio,
+    List<String> specializations = const [],
+    double yearsExperience = 0,
   }) async {
     await _db.from('staff').update({
       'first_name': firstName,
@@ -71,6 +79,10 @@ class StaffRepository {
       'position': position,
       'department': department,
       'role': role.name.toUpperCase(),
+      'salary': salary.toString(),
+      'specializations': specializations,
+      'bio': (bio == null || bio.trim().isEmpty) ? null : bio.trim(),
+      'years_experience': yearsExperience,
       'updated_at': DateTime.now().toIso8601String(),
     }).eq('id', id);
   }
@@ -79,4 +91,3 @@ class StaffRepository {
     await _db.from('staff').delete().eq('id', id);
   }
 }
-

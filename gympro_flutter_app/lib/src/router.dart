@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'auth/auth_controller.dart';
 import 'screens/dashboard/dashboard_shell.dart';
+import 'screens/classes/class_create_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/members/member_form_screen.dart';
 import 'screens/members/member_view_screen.dart';
@@ -81,6 +82,11 @@ class AppRouter {
             path: '/members/new',
             builder: (context, state) =>
                 MemberFormScreen(authController: authController),
+          ),
+          GoRoute(
+            path: '/classes/new',
+            builder: (context, state) =>
+                ClassCreateScreen(authController: authController),
           ),
           GoRoute(
             path: '/members/:id',

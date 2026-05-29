@@ -5,14 +5,16 @@ import '../../auth/auth_controller.dart';
 import '../../data/users_repository.dart';
 import '../../models/app_user.dart';
 import '../../models/user_row.dart';
-import '../../ui/app_search.dart';
-import '../../ui/app_surfaces.dart';
+import '../analytics/analytics_tab.dart';
+import '../classes/classes_tab.dart';
 import '../members/members_tab.dart';
+import '../overview/overview_tab.dart';
 import '../payments/payments_tab.dart';
 import '../staff/staff_tab.dart';
+import '../../ui/app_search.dart';
+import '../../ui/app_surfaces.dart';
 import '../../ui/app_tokens.dart';
 import '../../ui/empty_state.dart';
-import '../overview/overview_tab.dart';
 
 class _NavItem {
   const _NavItem({
@@ -109,13 +111,6 @@ class DashboardShell extends StatelessWidget {
             tab: 'analytics',
             roles: [AppRole.manager, AppRole.admin],
           ),
-          const _NavItem(
-            id: 'users',
-            label: 'Users',
-            icon: Icons.admin_panel_settings_outlined,
-            tab: 'users',
-            roles: [AppRole.admin],
-          ),
         ];
 
         final items = allItems
@@ -125,7 +120,13 @@ class DashboardShell extends StatelessWidget {
         final safeIndex = selectedIndex >= 0 ? selectedIndex : 0;
         final activeTab = items[safeIndex].tab;
 
-        Widget body() {
+        void goTab(String nextTab) {
+          context.go('/dashboard?tab=$nextTab');
+        }
+
+        final isWide = MediaQuery.of(context).size.width >= 900;
+
+        Widget buildBody() {
           switch (activeTab) {
             case 'overview':
               return OverviewTab(authController: authController);
@@ -137,36 +138,33 @@ class DashboardShell extends StatelessWidget {
               return PaymentsTab(authController: authController);
             case 'users':
               return _UsersTab(authController: authController);
+            case 'classes':
+              return ClassesTab(authController: authController);
+            case 'analytics':
+              return AnalyticsTab(authController: authController);
             default:
-              return _PlaceholderTab(
-                title: items[safeIndex].label,
-                subtitle:
-                    'This tab is scaffolded. Next: match the full web UI & features.',
+              return const EmptyState(
+                title: 'Not found',
+                subtitle: 'This dashboard section does not exist.',
+                icon: Icons.help_outline,
               );
           }
         }
 
-        void goTab(String nextTab) {
-          context.go('/dashboard?tab=$nextTab');
-        }
-
-        // On small screens, if a tab is not allowed for this role, show an explicit message
-        // instead of silently falling back to Overview (which can look like a blank/white page).
-        final tabIsAllowed = selectedIndex >= 0;
-
-        final isWide = MediaQuery.of(context).size.width >= 900;
-
         return Scaffold(
           backgroundColor: AppTokens.pageBg,
           appBar: AppBar(
-            title: const Text(
-              'Dashboard',
-              style: TextStyle(fontWeight: FontWeight.w800),
+            title: Image.asset(
+              'assets/images/gamalog.png',
+              height: 26,
+              fit: BoxFit.contain,
             ),
             actions: [
               IconButton(
                 tooltip: 'Profile',
-                onPressed: () => context.go('/dashboard?tab=users'),
+                onPressed: () => authController.hasRole(AppRole.admin)
+                    ? context.go('/users')
+                    : context.go('/dashboard?tab=overview'),
                 icon: const Icon(Icons.account_circle_outlined),
               ),
               IconButton(
@@ -177,31 +175,10 @@ class DashboardShell extends StatelessWidget {
               const SizedBox(width: 4),
             ],
           ),
-          body: !tabIsAllowed
-              ? const EmptyState(
-                  title: 'Not available',
-                  subtitle: 'You don’t have permission to view this section.',
-                  icon: Icons.lock_outline,
-                )
-              : isWide
-              ? Row(
-                  children: [
-                    NavigationRail(
-                      extended: true,
-                      selectedIndex: safeIndex,
-                      onDestinationSelected: (i) => goTab(items[i].tab),
-                      destinations: [
-                        for (final item in items)
-                          NavigationRailDestination(
-                            icon: Icon(item.icon),
-                            label: Text(item.label),
-                          ),
-                      ],
-                    ),
-                    Expanded(child: body()),
-                  ],
-                )
-              : body(),
+          body: SafeArea(
+            bottom: false,
+            child: buildBody(),
+          ),
           bottomNavigationBar: isWide
               ? null
               : _FloatingPillNav(
@@ -388,22 +365,6 @@ class _UsersTabState extends State<_UsersTab> {
   }
 }
 
-class _PlaceholderTab extends StatelessWidget {
-  const _PlaceholderTab({required this.title, required this.subtitle});
-
-  final String title;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return EmptyState(
-      title: title,
-      subtitle: subtitle,
-      icon: Icons.auto_awesome_outlined,
-    );
-  }
-}
-
 class _FloatingPillNav extends StatelessWidget {
   const _FloatingPillNav({
     required this.items,
@@ -420,47 +381,44 @@ class _FloatingPillNav extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final bg = Colors.white.withValues(alpha: 0.92);
     final border = scheme.primary.withValues(alpha: 0.10);
-    final maxWidth = MediaQuery.of(context).size.width - 32;
+    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
 
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-        child: Align(
-          alignment: Alignment.bottomCenter,
-          child: Material(
-            color: bg,
-            elevation: 0,
-            borderRadius: BorderRadius.circular(999),
-            child: Container(
-              constraints: BoxConstraints(maxWidth: maxWidth),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: border),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.10),
-                    blurRadius: 24,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    for (int i = 0; i < items.length; i++)
-                      _PillNavItem(
+    return Padding(
+      padding: EdgeInsets.fromLTRB(12, 0, 12, 12 + bottomInset),
+      child: SizedBox(
+        height: 64,
+        width: double.infinity,
+        child: Material(
+          color: bg,
+          elevation: 0,
+          borderRadius: BorderRadius.circular(999),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: border),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.10),
+                  blurRadius: 24,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+            child: Row(
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                for (int i = 0; i < items.length; i++)
+                  Expanded(
+                    child: Center(
+                      child: _PillNavItem(
                         icon: items[i].icon,
                         isSelected: i == selectedIndex,
                         onTap: () => onSelected(i),
                       ),
-                  ],
-                ),
-              ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ),
@@ -486,21 +444,18 @@ class _PillNavItem extends StatelessWidget {
     final fg = isSelected ? scheme.onPrimary : scheme.onSurfaceVariant;
     final bg = isSelected ? scheme.primary : Colors.transparent;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(999),
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOut,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: bg,
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Icon(icon, color: fg, size: 24),
+    return InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(999),
         ),
+        child: Icon(icon, color: fg, size: 24),
       ),
     );
   }

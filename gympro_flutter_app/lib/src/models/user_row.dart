@@ -7,6 +7,8 @@ class UserRow {
     required this.role,
     required this.isActive,
     this.phoneNumber,
+    this.createdAt,
+    this.updatedAt,
   });
 
   final String id;
@@ -16,6 +18,8 @@ class UserRow {
   final String role;
   final bool isActive;
   final String? phoneNumber;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   String get fullName => '$firstName $lastName'.trim();
 
@@ -28,7 +32,8 @@ class UserRow {
       phoneNumber: row['phone_number'] as String?,
       role: (row['role'] as String?) ?? 'member',
       isActive: (row['is_active'] as bool?) ?? true,
+      createdAt: DateTime.tryParse((row['created_at'] as String?) ?? ''),
+      updatedAt: DateTime.tryParse((row['updated_at'] as String?) ?? ''),
     );
   }
 }
-

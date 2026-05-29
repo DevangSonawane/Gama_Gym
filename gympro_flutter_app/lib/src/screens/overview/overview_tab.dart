@@ -12,10 +12,10 @@ class OverviewTab extends StatefulWidget {
   final AuthController authController;
 
   @override
-  State<OverviewTab> createState() => _OverviewTabState();
+  State<OverviewTab> createState() => OverviewTabState();
 }
 
-class _OverviewTabState extends State<OverviewTab> {
+class OverviewTabState extends State<OverviewTab> {
   final _membersRepo = MembersRepository();
   final _paymentsRepo = PaymentsRepository();
 
@@ -66,120 +66,132 @@ class _OverviewTabState extends State<OverviewTab> {
     final user = widget.authController.user!;
     final isWide = MediaQuery.of(context).size.width >= 920;
 
-    return RefreshIndicator(
-      onRefresh: _load,
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
-        children: [
-          _IntroSection(
-            firstName: user.firstName,
-            onMembers: () => context.go('/dashboard?tab=members'),
-            onSchedule: () => context.go('/dashboard?tab=classes'),
-            onRevenue: () => context.go('/dashboard?tab=payments'),
-          ),
-          const SizedBox(height: 14),
-          const _SectionHeader(
-            title: 'Key features',
-            subtitle: 'Everything you need to run your gym, in one view.',
-            icon: Icons.auto_awesome_outlined,
-          ),
-          const SizedBox(height: 12),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isNarrow = constraints.maxWidth < 720;
-              const tiles = [
-                _FeatureTile(
-                  icon: Icons.trending_up,
-                  title: 'Growth at a glance',
-                  description:
-                      'Track member growth and revenue trends without leaving the dashboard.',
-                  gradient: [Color(0xFF00BC7D), Color(0xFF009664)],
-                ),
-                _FeatureTile(
-                  icon: Icons.calendar_month_outlined,
-                  title: 'Smart scheduling',
-                  description:
-                      'See how classes are filling up so you can adjust capacity in real time.',
-                  gradient: [Color(0xFF00BC7D), Color(0xFF10B981)],
-                ),
-                _FeatureTile(
-                  icon: Icons.monitor_heart_outlined,
-                  title: 'Operations overview',
-                  description:
-                      'Monitor staff, payments, and activity to keep your gym running smoothly.',
-                  gradient: [Color(0xFF10B981), Color(0xFF14B8A6)],
-                ),
-              ];
+    return ColoredBox(
+      color: AppTokens.pageBg,
+      child: RefreshIndicator(
+        onRefresh: _load,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
+          children: [
+            // If this doesn't render, the issue is upstream (routing/layout/renderer),
+            // not the dashboard widgets.
+            Text(
+              'Overview',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 10),
+            _IntroSection(
+              firstName: user.firstName,
+              onMembers: () => context.go('/dashboard?tab=members'),
+              onSchedule: () => context.go('/dashboard?tab=classes'),
+              onRevenue: () => context.go('/dashboard?tab=payments'),
+            ),
+            const SizedBox(height: 14),
+            const _SectionHeader(
+              title: 'Key features',
+              subtitle: 'Everything you need to run your gym, in one view.',
+              icon: Icons.auto_awesome_outlined,
+            ),
+            const SizedBox(height: 12),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isNarrow = constraints.maxWidth < 720;
+                const tiles = [
+                  _FeatureTile(
+                    icon: Icons.trending_up,
+                    title: 'Growth at a glance',
+                    description:
+                        'Track member growth and revenue trends without leaving the dashboard.',
+                    gradient: [Color(0xFF00BC7D), Color(0xFF009664)],
+                  ),
+                  _FeatureTile(
+                    icon: Icons.calendar_month_outlined,
+                    title: 'Smart scheduling',
+                    description:
+                        'See how classes are filling up so you can adjust capacity in real time.',
+                    gradient: [Color(0xFF00BC7D), Color(0xFF10B981)],
+                  ),
+                  _FeatureTile(
+                    icon: Icons.monitor_heart_outlined,
+                    title: 'Operations overview',
+                    description:
+                        'Monitor staff, payments, and activity to keep your gym running smoothly.',
+                    gradient: [Color(0xFF10B981), Color(0xFF14B8A6)],
+                  ),
+                ];
 
-              if (isNarrow) {
-                return Column(
+                if (isNarrow) {
+                  return Column(
+                    children: [
+                      for (final t in tiles) ...[t, const SizedBox(height: 10)],
+                    ],
+                  );
+                }
+
+                return Row(
                   children: [
-                    for (final t in tiles) ...[t, const SizedBox(height: 10)],
+                    Expanded(child: tiles[0]),
+                    const SizedBox(width: 10),
+                    Expanded(child: tiles[1]),
+                    const SizedBox(width: 10),
+                    Expanded(child: tiles[2]),
                   ],
                 );
-              }
-
-              return Row(
-                children: [
-                  Expanded(child: tiles[0]),
-                  const SizedBox(width: 10),
-                  Expanded(child: tiles[1]),
-                  const SizedBox(width: 10),
-                  Expanded(child: tiles[2]),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 14),
-          const _SectionHeader(
-            title: 'Quick stats',
-            subtitle: 'A snapshot of your business this month.',
-            icon: Icons.dashboard_outlined,
-          ),
-          const SizedBox(height: 12),
-          GridView.count(
-            crossAxisCount: isWide ? 4 : 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: isWide ? 1.55 : 1.35,
-            children: [
-              _MetricCard(
-                title: 'Total Members',
-                value: _loading ? null : (_memberCount?.toString() ?? '—'),
-                icon: Icons.people_outline,
-                gradient: const [Color(0xFF00BC7D), Color(0xFF009664)],
-                onTap: () => context.go('/dashboard?tab=members'),
-              ),
-              _MetricCard(
-                title: 'Active Classes',
-                value: '—',
-                icon: Icons.calendar_month_outlined,
-                gradient: const [Color(0xFF00BC7D), Color(0xFF10B981)],
-                onTap: () => context.go('/dashboard?tab=classes'),
-              ),
-              _MetricCard(
-                title: 'Monthly Revenue',
-                value: _loading
-                    ? null
-                    : (_monthlyRevenue == null
-                          ? '—'
-                          : 'INR ${_monthlyRevenue!.toStringAsFixed(0)}'),
-                icon: Icons.payments_outlined,
-                gradient: const [Color(0xFF10B981), Color(0xFF14B8A6)],
-                onTap: () => context.go('/dashboard?tab=payments'),
-              ),
-              _MetricCard(
-                title: 'Equipment Status',
-                value: '—',
-                icon: Icons.fitness_center,
-                gradient: const [Color(0xFF00BC7D), Color(0xFF0EA5E9)],
-                onTap: () {},
-              ),
-            ],
-          ),
-        ],
+              },
+            ),
+            const SizedBox(height: 14),
+            const _SectionHeader(
+              title: 'Quick stats',
+              subtitle: 'A snapshot of your business this month.',
+              icon: Icons.dashboard_outlined,
+            ),
+            const SizedBox(height: 12),
+            GridView.count(
+              crossAxisCount: isWide ? 4 : 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: isWide ? 1.55 : 1.35,
+              children: [
+                _MetricCard(
+                  title: 'Total Members',
+                  value: _loading ? null : (_memberCount?.toString() ?? '—'),
+                  icon: Icons.people_outline,
+                  gradient: const [Color(0xFF00BC7D), Color(0xFF009664)],
+                  onTap: () => context.go('/dashboard?tab=members'),
+                ),
+                _MetricCard(
+                  title: 'Active Classes',
+                  value: '—',
+                  icon: Icons.calendar_month_outlined,
+                  gradient: const [Color(0xFF00BC7D), Color(0xFF10B981)],
+                  onTap: () => context.go('/dashboard?tab=classes'),
+                ),
+                _MetricCard(
+                  title: 'Monthly Revenue',
+                  value: _loading
+                      ? null
+                      : (_monthlyRevenue == null
+                            ? '—'
+                            : 'INR ${_monthlyRevenue!.toStringAsFixed(0)}'),
+                  icon: Icons.payments_outlined,
+                  gradient: const [Color(0xFF10B981), Color(0xFF14B8A6)],
+                  onTap: () => context.go('/dashboard?tab=payments'),
+                ),
+                _MetricCard(
+                  title: 'Equipment Status',
+                  value: '—',
+                  icon: Icons.fitness_center,
+                  gradient: const [Color(0xFF00BC7D), Color(0xFF0EA5E9)],
+                  onTap: () {},
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -425,15 +437,16 @@ class _MetricCard extends StatelessWidget {
           border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
           boxShadow: AppTokens.softShadow(opacity: 0.06),
         ),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Container(
-                  height: 44,
-                  width: 44,
+                  height: 36,
+                  width: 36,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(colors: gradient),
                     borderRadius: BorderRadius.circular(14),
@@ -451,21 +464,31 @@ class _MetricCard extends StatelessWidget {
                 Icon(Icons.chevron_right, color: scheme.onSurfaceVariant),
               ],
             ),
-            const Spacer(),
-            Text(
-              title,
-              style: TextStyle(
-                color: scheme.onSurfaceVariant,
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              value ?? '…',
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: scheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                    height: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value ?? '…',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    height: 1.0,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
           ],
         ),
