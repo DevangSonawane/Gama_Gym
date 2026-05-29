@@ -142,8 +142,9 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
             LayoutBuilder(
               builder: (context, constraints) {
                 final narrow = constraints.maxWidth < 520;
+                final veryNarrow = constraints.maxWidth < 360;
 
-                final back = OutlinedButton.icon(
+                final back = OutlinedButton(
                   style: OutlinedButton.styleFrom(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -152,23 +153,49 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                       color: Colors.black.withValues(alpha: 0.10),
                     ),
                     foregroundColor: Colors.black87,
+                    minimumSize: const Size(44, 44),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                   ),
                   onPressed: () => context.go('/dashboard?tab=members'),
-                  icon: const Icon(Icons.arrow_back, size: 18),
-                  label: const Text('Back'),
+                  child: const Icon(Icons.arrow_back, size: 18),
                 );
 
-                final edit = FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppTokens.brand,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  onPressed: () =>
-                      context.go('/members/${widget.memberId}/edit'),
-                  icon: const Icon(Icons.edit_outlined),
-                  label: const Text('Edit Profile'),
+                final edit = veryNarrow
+                    ? SizedBox(
+                        height: 44,
+                        child: FilledButton(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppTokens.brand,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                          ),
+                          onPressed: () =>
+                              context.go('/members/${widget.memberId}/edit'),
+                          child: const Icon(Icons.edit_outlined),
+                        ),
+                      )
+                    : FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppTokens.brand,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          minimumSize: const Size(0, 44),
+                        ),
+                        onPressed: () =>
+                            context.go('/members/${widget.memberId}/edit'),
+                        icon: const Icon(Icons.edit_outlined),
+                        label: const Text('Edit Profile'),
+                      );
+
+                final actionsRow = Row(
+                  children: [
+                    back,
+                    const Spacer(),
+                    if (canEdit) Flexible(child: edit),
+                  ],
                 );
 
                 final titleBlock = Row(
@@ -248,16 +275,12 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                 );
 
                 if (!narrow) {
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Expanded(child: titleBlock),
-                      const SizedBox(width: 12),
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        children: [back, if (canEdit) edit],
-                      ),
+                      actionsRow,
+                      const SizedBox(height: 12),
+                      titleBlock,
                     ],
                   );
                 }
@@ -265,13 +288,9 @@ class _MemberViewScreenState extends State<MemberViewScreen> {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    titleBlock,
+                    actionsRow,
                     const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: [back, if (canEdit) edit],
-                    ),
+                    titleBlock,
                   ],
                 );
               },

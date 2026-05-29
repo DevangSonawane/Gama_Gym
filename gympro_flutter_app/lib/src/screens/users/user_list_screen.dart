@@ -235,51 +235,33 @@ class _UserListScreenState extends State<UserListScreen> {
                     ),
                   );
 
-                  final header = ReactPageHeader(
-                    title: 'User Management',
-                    subtitle: 'Manage system users and their roles',
-                    backLabel: '',
-                    onBack: () => context.go('/dashboard?tab=overview'),
-                    icon: Icons.auto_awesome,
+                  final back = OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      side: BorderSide(
+                        color: Colors.black.withValues(alpha: 0.10),
+                      ),
+                      foregroundColor: Colors.black87,
+                      minimumSize: const Size(44, 44),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                    ),
+                    onPressed: () => context.go('/dashboard?tab=overview'),
+                    child: const Icon(Icons.arrow_back, size: 18),
                   );
 
                   if (!narrow) {
                     return Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(child: header),
-                        const SizedBox(width: 12),
-                        create,
-                      ],
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [back, const Spacer(), create],
                     );
                   }
 
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(child: header),
-                          const SizedBox(width: 12),
-                          SizedBox(
-                            height: 44,
-                            child: FilledButton(
-                              style: FilledButton.styleFrom(
-                                backgroundColor: AppTokens.brand,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                ),
-                              ),
-                              onPressed: () => context.go('/users/new'),
-                              child: const Icon(Icons.person_add_alt_1),
-                            ),
-                          ),
-                        ],
-                      ),
+                      Align(alignment: Alignment.centerLeft, child: back),
                       const SizedBox(height: 10),
                       create,
                     ],

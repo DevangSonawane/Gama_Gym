@@ -18,11 +18,8 @@ class AnalyticsTab extends StatefulWidget {
   State<AnalyticsTab> createState() => _AnalyticsTabState();
 }
 
-class _AnalyticsTabState extends State<AnalyticsTab>
-    with SingleTickerProviderStateMixin {
+class _AnalyticsTabState extends State<AnalyticsTab> {
   SupabaseClient get _db => Supabase.instance.client;
-
-  late final TabController _tabs;
 
   String _period = '30d';
   bool _loading = true;
@@ -33,14 +30,7 @@ class _AnalyticsTabState extends State<AnalyticsTab>
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 4, vsync: this);
     _load();
-  }
-
-  @override
-  void dispose() {
-    _tabs.dispose();
-    super.dispose();
   }
 
   DateTime _rangeStart(String period) {
@@ -364,25 +354,15 @@ class _AnalyticsTabState extends State<AnalyticsTab>
                   ),
                 );
 
-                final header = Row(
-                  children: [
-                    Icon(
-                      Icons.auto_awesome,
-                      color: AppTokens.brand.withValues(alpha: 0.95),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Analytics Dashboard',
-                        style: Theme.of(context).textTheme.headlineSmall
-                            ?.copyWith(fontWeight: FontWeight.w900),
-                      ),
-                    ),
-                  ],
+                final header = Text(
+                  'Analytics',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
                 );
 
                 final sub = Text(
-                  'Monitor performance, revenue, and member trends',
+                  'Key metrics and performance overview',
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
@@ -430,92 +410,45 @@ class _AnalyticsTabState extends State<AnalyticsTab>
                   crossAxisSpacing: 12,
                   childAspectRatio: w >= 980 ? 1.6 : 1.75,
                   children: [
-                    _MetricCard(
+                    _AnalyticsStatTile(
                       title: 'Total Members',
                       value: '${data.memberStats.totalMembers}',
-                      change:
-                          '+${data.memberStats.membersGrowth}% from last month',
-                      icon: Icons.groups_outlined,
-                      trendUp: true,
-                      gradient: const [AppTokens.brand, Color(0xFF059669)],
+                      accent: AppTokens.brand,
+                      changeText:
+                          '+${data.memberStats.membersGrowth}% vs last month',
                     ),
-                    _MetricCard(
+                    _AnalyticsStatTile(
                       title: 'Monthly Revenue',
                       value:
                           '\$${data.revenueStats.monthlyRevenue.toStringAsFixed(0)}',
-                      change:
-                          '+${data.revenueStats.revenueGrowth}% from last month',
-                      icon: Icons.payments_outlined,
-                      trendUp: true,
-                      gradient: const [Color(0xFF10B981), AppTokens.brand],
+                      accent: const Color(0xFF10B981),
+                      changeText:
+                          '+${data.revenueStats.revenueGrowth}% vs last month',
                     ),
-                    _MetricCard(
+                    _AnalyticsStatTile(
                       title: 'Class Utilization',
                       value: '${data.classStats.classUtilization}%',
-                      change: '+5.2% from last month',
-                      icon: Icons.calendar_month_outlined,
-                      trendUp: true,
-                      gradient: const [AppTokens.brand, Color(0xFF14B8A6)],
+                      accent: const Color(0xFF0891B2),
+                      changeText: 'Based on recent bookings',
                     ),
-                    _MetricCard(
-                      title: 'Member Retention',
+                    _AnalyticsStatTile(
+                      title: 'Retention',
                       value: '${data.memberStats.retentionRate}%',
-                      change: '+2.1% from last month',
-                      icon: Icons.flag_outlined,
-                      trendUp: true,
-                      gradient: const [Color(0xFF14B8A6), AppTokens.brand],
+                      accent: const Color(0xFF6D28D9),
+                      changeText: 'Active / total members',
                     ),
                   ],
                 );
               },
             ),
             const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 16,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: TabBar(
-                controller: _tabs,
-                labelColor: Colors.white,
-                unselectedLabelColor: Theme.of(
-                  context,
-                ).colorScheme.onSurfaceVariant,
-                indicator: BoxDecoration(
-                  color: AppTokens.brand,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                dividerColor: Colors.transparent,
-                tabs: const [
-                  Tab(text: 'Members'),
-                  Tab(text: 'Revenue'),
-                  Tab(text: 'Classes'),
-                  Tab(text: 'Trainers'),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 860,
-              child: TabBarView(
-                controller: _tabs,
-                children: [
-                  _MembersAnalyticsView(data: data),
-                  _RevenueAnalyticsView(data: data),
-                  _ClassesAnalyticsView(data: data),
-                  _TrainersAnalyticsView(data: data),
-                ],
-              ),
-            ),
+            _MembersAnalyticsView(data: data),
+            const SizedBox(height: 14),
+            _RevenueAnalyticsView(data: data),
+            const SizedBox(height: 14),
+            _ClassesAnalyticsView(data: data),
+            const SizedBox(height: 14),
+            _TrainersAnalyticsView(data: data),
           ],
         ),
       ),
@@ -523,97 +456,70 @@ class _AnalyticsTabState extends State<AnalyticsTab>
   }
 }
 
-class _MetricCard extends StatelessWidget {
-  const _MetricCard({
+class _AnalyticsStatTile extends StatelessWidget {
+  const _AnalyticsStatTile({
     required this.title,
     required this.value,
-    required this.change,
-    required this.icon,
-    required this.trendUp,
-    required this.gradient,
+    required this.accent,
+    required this.changeText,
   });
 
   final String title;
   final String value;
-  final String change;
-  final IconData icon;
-  final bool trendUp;
-  final List<Color> gradient;
+  final Color accent;
+  final String changeText;
 
   @override
   Widget build(BuildContext context) {
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
-    final chipBg = Colors.white.withValues(alpha: 0.16);
     return Container(
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(colors: gradient),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
         boxShadow: [
           BoxShadow(
-            color: gradient.first.withValues(alpha: 0.22),
-            blurRadius: 22,
-            offset: const Offset(0, 12),
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(16),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            height: 44,
-            width: 44,
-            decoration: BoxDecoration(
-              color: chipBg,
-              borderRadius: BorderRadius.circular(14),
+          Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: muted,
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
             ),
-            child: Icon(icon, color: Colors.white),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.90),
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 26,
-                    fontWeight: FontWeight.w900,
-                    height: 1.1,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(
-                      trendUp ? Icons.trending_up : Icons.trending_down,
-                      size: 16,
-                      color: Colors.white,
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        change,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: muted.withValues(alpha: 0.10)),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+          const SizedBox(height: 8),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w900,
+                height: 1.1,
+                color: accent,
+              ),
             ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            changeText,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(color: muted, fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -629,8 +535,7 @@ class _MembersAnalyticsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final total = math.max(1, data.memberStats.totalMembers);
-    return ListView(
-      padding: const EdgeInsets.only(bottom: 12),
+    return Column(
       children: [
         ReactCard(
           header: const ReactCardHeader(
@@ -725,8 +630,7 @@ class _RevenueAnalyticsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.only(bottom: 12),
+    return Column(
       children: [
         ReactCard(
           header: const ReactCardHeader(
@@ -852,8 +756,7 @@ class _ClassesAnalyticsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.only(bottom: 12),
+    return Column(
       children: [
         ReactCard(
           header: const ReactCardHeader(
@@ -970,8 +873,7 @@ class _TrainersAnalyticsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.only(bottom: 12),
+    return Column(
       children: [
         ReactCard(
           header: const ReactCardHeader(
@@ -1093,36 +995,56 @@ class _MiniStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF3F4F6),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.04)),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            value,
-            style: const TextStyle(
-              color: AppTokens.brand,
-              fontWeight: FontWeight.w900,
-              fontSize: 26,
-              height: 1.1,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final ultraCompact = constraints.maxHeight < 60;
+        final compact = constraints.maxHeight < 72;
+        final valueFont = ultraCompact ? 20.0 : (compact ? 22.0 : 26.0);
+        final labelFont = ultraCompact ? 11.0 : (compact ? 12.0 : 14.0);
+        final spacing = ultraCompact ? 2.0 : (compact ? 4.0 : 6.0);
+        final pad = ultraCompact ? 8.0 : (compact ? 10.0 : 14.0);
+
+        return Container(
+          padding: EdgeInsets.all(pad),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF3F4F6),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.black.withValues(alpha: 0.04)),
+          ),
+          alignment: Alignment.center,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  value,
+                  maxLines: 1,
+                  style: TextStyle(
+                    color: AppTokens.brand,
+                    fontWeight: FontWeight.w900,
+                    fontSize: valueFont,
+                    height: 1.1,
+                  ),
+                ),
+                SizedBox(height: spacing),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w700,
+                    fontSize: labelFont,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

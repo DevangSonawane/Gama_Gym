@@ -86,7 +86,6 @@ class OverviewTabState extends State<OverviewTab> {
               firstName: user.firstName,
               onMembers: () => context.go('/dashboard?tab=members'),
               onSchedule: () => context.go('/dashboard?tab=classes'),
-              onRevenue: () => context.go('/dashboard?tab=payments'),
             ),
             const SizedBox(height: 14),
             const _SectionHeader(
@@ -253,13 +252,11 @@ class _IntroSection extends StatelessWidget {
     required this.firstName,
     required this.onMembers,
     required this.onSchedule,
-    required this.onRevenue,
   });
 
   final String firstName;
   final VoidCallback onMembers;
   final VoidCallback onSchedule;
-  final VoidCallback onRevenue;
 
   @override
   Widget build(BuildContext context) {
@@ -385,17 +382,6 @@ class _IntroSection extends StatelessWidget {
                 icon: const Icon(Icons.calendar_month_outlined, size: 18),
                 label: const Text('Schedule'),
                 style: OutlinedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-              ),
-              FilledButton.icon(
-                onPressed: onRevenue,
-                icon: const Icon(Icons.payments_outlined, size: 18),
-                label: const Text('Revenue'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppTokens.brand,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
