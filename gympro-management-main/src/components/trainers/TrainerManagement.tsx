@@ -5,7 +5,6 @@ import { Trainer, UserRole } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Search,
@@ -20,22 +19,20 @@ import {
   Dumbbell
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase, DEFAULT_GYM_ID } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import PageLoader from '../ui/PageLoader';
 
-type SupabaseTrainerRow = {
+type SupabaseUserTrainerRow = {
   id: string;
   email: string;
   first_name: string;
   last_name: string;
-  phone?: string | null;
-  bio?: string | null;
-  profile_image?: string | null;
-  specialization?: string[] | null;
+  phone_number?: string | null;
+  role: string;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
-  gym_id?: string;
 };
 
 const TrainerManagement: React.FC = () => {
@@ -43,36 +40,33 @@ const TrainerManagement: React.FC = () => {
   const { hasRole } = useAuth();
   const [trainers, setTrainers] = useState<Trainer[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSpecialization, setSelectedSpecialization] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
 
-  // Helper function to convert Supabase trainer to Trainer interface
-  const mapSupabaseTrainerToTrainer = (dbTrainer: SupabaseTrainerRow): Trainer => {
+  // Helper function to convert Supabase user to Trainer interface
+  const mapSupabaseUserToTrainer = (dbUser: SupabaseUserTrainerRow): Trainer => {
     return {
-      id: dbTrainer.id,
-      email: dbTrainer.email,
-      firstName: dbTrainer.first_name,
-      lastName: dbTrainer.last_name,
-      phone: dbTrainer.phone || '',
-      bio: dbTrainer.bio || '',
-      profileImage: dbTrainer.profile_image || '',
-      specialization: dbTrainer.specialization || [],
-      createdAt: new Date(dbTrainer.created_at),
-      updatedAt: new Date(dbTrainer.updated_at),
-      gymId: dbTrainer.gym_id
+      id: dbUser.id,
+      email: dbUser.email,
+      firstName: dbUser.first_name,
+      lastName: dbUser.last_name,
+      phone: dbUser.phone_number || '',
+      specialization: [],
+      bio: '',
+      profileImage: '',
+      createdAt: new Date(dbUser.created_at),
+      updatedAt: new Date(dbUser.updated_at),
     };
   };
 
-  // Fetch trainers from Supabase
+  // Fetch trainers from Supabase users table
   useEffect(() => {
     const fetchTrainers = async () => {
       try {
         setIsLoading(true);
         const { data, error } = await supabase
-          .from('staff')
+          .from('users')
           .select('*')
-          .eq('gym_id', DEFAULT_GYM_ID)
-          .eq('role', 'TRAINER')
+          .eq('role', 'trainer')
           .order('created_at', { ascending: false });
 
         if (error) {
@@ -82,7 +76,7 @@ const TrainerManagement: React.FC = () => {
         }
 
         if (data) {
-          const mappedTrainers = data.map(mapSupabaseTrainerToTrainer);
+          const mappedTrainers = data.map(mapSupabaseUserToTrainer);
           setTrainers(mappedTrainers);
         }
       } catch (error) {
@@ -112,10 +106,7 @@ const TrainerManagement: React.FC = () => {
       trainer.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       trainer.email.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesSpecialization = selectedSpecialization === 'all' || 
-      (trainer.specialization && trainer.specialization.includes(selectedSpecialization));
-
-    return matchesSearch && matchesSpecialization;
+    return matchesSearch;
   });
 
   const handleDeleteTrainer = async (trainerId: string) => {
@@ -125,7 +116,7 @@ const TrainerManagement: React.FC = () => {
 
     try {
       const { error } = await supabase
-        .from('staff')
+        .from('users')
         .delete()
         .eq('id', trainerId);
 
@@ -143,9 +134,6 @@ const TrainerManagement: React.FC = () => {
     }
   };
 
-  // Collect all unique specializations for the filter
-  const allSpecializations = Array.from(new Set(trainers.flatMap(t => t.specialization || [])));
-
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
@@ -160,7 +148,7 @@ const TrainerManagement: React.FC = () => {
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button
               className="rounded-xl h-11 px-6 shadow-lg shadow-[#00bc7d]/20 bg-[#00bc7d] hover:bg-[#00bc7d]/90 text-white"
-              onClick={() => navigate('/staff/new')}
+              onClick={() => navigate('/trainers/new')}
             >
               <UserPlus className="h-4 w-4 mr-2" />
               Add Trainer
@@ -173,7 +161,7 @@ const TrainerManagement: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
           { label: 'Total Trainers', value: trainers.length, icon: Users, color: 'text-[#00bc7d]', bg: 'bg-[#00bc7d]/10', border: 'border-[#00bc7d]/20', delay: 0.1 },
-          { label: 'Specializations', value: allSpecializations.length, icon: Sparkles, color: 'text-blue-600', bg: 'bg-blue-500/10', border: 'border-blue-200', delay: 0.2 },
+          { label: 'Active Trainers', value: trainers.length, icon: Sparkles, color: 'text-blue-600', bg: 'bg-blue-500/10', border: 'border-blue-200', delay: 0.2 },
           { label: 'Active Schedules', value: '0', icon: Calendar, color: 'text-purple-600', bg: 'bg-purple-500/10', border: 'border-purple-200', delay: 0.3 }, // Placeholder for now
         ].map((stat, index) => (
           <motion.div
@@ -203,7 +191,7 @@ const TrainerManagement: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-3xl bg-white shadow-2xl shadow-gray-100/50 border border-gray-100 overflow-hidden"
+        className="rounded-3xl bg-white shadow-xl shadow-gray-100/50 border border-gray-100 overflow-hidden"
       >
         <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4 bg-gradient-to-r from-white to-gray-50/50">
           <div className="flex items-center gap-3">
@@ -226,17 +214,6 @@ const TrainerManagement: React.FC = () => {
                 className="pl-10 rounded-xl border-gray-200 h-11 bg-white focus:ring-2 focus:ring-[#00bc7d]/20 focus:border-[#00bc7d] transition-all shadow-sm w-64"
               />
             </div>
-            <Select value={selectedSpecialization} onValueChange={setSelectedSpecialization}>
-              <SelectTrigger className="w-48 rounded-xl border-gray-200 h-11 bg-white focus:ring-2 focus:ring-[#00bc7d]/20 focus:border-[#00bc7d] shadow-sm">
-                <SelectValue placeholder="Filter by Specialization" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Specializations</SelectItem>
-                {allSpecializations.map(spec => (
-                  <SelectItem key={spec} value={spec}>{spec}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
         </div>
 
@@ -248,7 +225,7 @@ const TrainerManagement: React.FC = () => {
                   <Users className="h-8 w-8 text-gray-400" />
                 </div>
                 <p className="text-lg font-medium text-gray-900">No trainers found</p>
-                <p className="text-sm text-gray-500">Try adjusting your search or filters, or add a new trainer.</p>
+                <p className="text-sm text-gray-500">Try adjusting your search, or add a new trainer.</p>
               </div>
             </div>
           ) : (
@@ -273,7 +250,7 @@ const TrainerManagement: React.FC = () => {
                         <p className="text-lg font-bold text-gray-900">
                           {trainer.firstName} {trainer.lastName}
                         </p>
-                        <p className="text-sm text-gray-500 truncate max-w-[150px]" title={trainer.bio}>{trainer.bio || 'No bio available'}</p>
+                        <p className="text-sm text-gray-500 truncate max-w-[150px]">Trainer</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
@@ -282,9 +259,9 @@ const TrainerManagement: React.FC = () => {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => navigate(`/staff/${trainer.id}/edit`)}
                             className="h-9 w-9 rounded-xl text-gray-500 hover:bg-[#00bc7d]/10 hover:text-[#00bc7d] transition-all"
                             title="Edit Trainer"
+                              onClick={() => navigate(`/trainers/${trainer.id}/edit`)}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -302,20 +279,6 @@ const TrainerManagement: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-2 text-sm">
-                    {trainer.specialization && trainer.specialization.length > 0 ? (
-                      trainer.specialization.map((spec, i) => (
-                        <Badge key={i} className="bg-[#00bc7d]/10 text-[#00bc7d] border-[#00bc7d]/20 border px-2.5 py-0.5 rounded-full text-xs font-semibold">
-                          {spec}
-                        </Badge>
-                      ))
-                    ) : (
-                      <Badge className="bg-gray-500/10 text-gray-700 border-gray-200 border px-2.5 py-0.5 rounded-full text-xs font-semibold">
-                        General
-                      </Badge>
-                    )}
-                  </div>
-
                   <div className="space-y-2 text-sm text-gray-600 mt-2">
                     <div className="flex items-center gap-2">
                       <Mail className="h-4 w-4 text-gray-400" />
@@ -331,14 +294,13 @@ const TrainerManagement: React.FC = () => {
                     <Button
                       variant="outline"
                       className="flex-1 rounded-xl h-11 border-gray-200 text-gray-700 hover:border-[#00bc7d] hover:text-[#00bc7d] hover:bg-[#00bc7d]/5"
-                      onClick={() => navigate(`/staff/${trainer.id}`)}
                     >
                       <Calendar className="h-4 w-4 mr-2" />
                       Schedule
                     </Button>
                     <Button
+                      onClick={() => navigate(`/trainers/${trainer.id}`)}
                       className="flex-1 rounded-xl h-11 bg-[#00bc7d] hover:bg-[#00bc7d]/90 text-white shadow-lg shadow-[#00bc7d]/20"
-                      onClick={() => navigate(`/staff/${trainer.id}`)}
                     >
                       View Profile
                     </Button>

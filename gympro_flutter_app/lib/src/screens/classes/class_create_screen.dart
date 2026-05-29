@@ -239,12 +239,13 @@ class _ClassCreateScreenState extends State<ClassCreateScreen> {
                           'Strength',
                           'Cardio',
                           'Pilates',
-                          'General',
+                          'Boxing',
+                          'Dance',
                         ];
 
                         final basicInfo = ReactCard(
                           header: const ReactCardHeader(
-                            icon: Icons.info_outline,
+                            icon: Icons.local_offer_outlined,
                             title: 'Basic Information',
                             subtitle: 'General details about the class',
                           ),
@@ -339,7 +340,7 @@ class _ClassCreateScreenState extends State<ClassCreateScreen> {
 
                         final instructorSchedule = ReactCard(
                           header: const ReactCardHeader(
-                            icon: Icons.badge_outlined,
+                            icon: Icons.people_outline,
                             title: 'Instructor & Schedule',
                             subtitle: 'Who is teaching and when',
                           ),
@@ -450,15 +451,20 @@ class _ClassCreateScreenState extends State<ClassCreateScreen> {
                           header: const ReactCardHeader(
                             icon: Icons.payments_outlined,
                             title: 'Capacity & Pricing',
-                            subtitle: 'Set price and limits',
+                            subtitle: 'Set price, duration, and capacity',
                           ),
                           child: Column(
                             children: [
                               TextFormField(
                                 controller: _price,
-                                keyboardType: TextInputType.number,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      signed: false,
+                                      decimal: true,
+                                    ),
                                 decoration: const InputDecoration(
-                                  labelText: 'Price per Session (\$)',
+                                  labelText: 'Price per Session (₹)',
+                                  prefixText: '₹ ',
                                   border: OutlineInputBorder(),
                                 ),
                                 validator: (v) {
@@ -557,7 +563,7 @@ class _ClassCreateScreenState extends State<ClassCreateScreen> {
 
                         final equipment = ReactCard(
                           header: const ReactCardHeader(
-                            icon: Icons.fitness_center_outlined,
+                            icon: Icons.layers_outlined,
                             title: 'Equipment',
                             subtitle: 'Add equipment...',
                           ),
@@ -570,7 +576,6 @@ class _ClassCreateScreenState extends State<ClassCreateScreen> {
                                     child: TextFormField(
                                       controller: _equipment,
                                       decoration: const InputDecoration(
-                                        labelText: 'Equipment',
                                         hintText: 'Add equipment...',
                                         border: OutlineInputBorder(),
                                       ),
@@ -590,7 +595,9 @@ class _ClassCreateScreenState extends State<ClassCreateScreen> {
                                       ),
                                     ),
                                     onPressed: _addEquipment,
-                                    child: const Icon(Icons.add),
+                                    child: const Icon(
+                                      Icons.check_circle_outline,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -611,9 +618,44 @@ class _ClassCreateScreenState extends State<ClassCreateScreen> {
                                   runSpacing: 8,
                                   children: [
                                     for (final e in _equipmentItems)
-                                      Chip(
-                                        label: Text(e),
-                                        onDeleted: () => _removeEquipment(e),
+                                      InkWell(
+                                        borderRadius: BorderRadius.circular(12),
+                                        onTap: () => _removeEquipment(e),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 10,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withValues(
+                                              alpha: 0.04,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                e,
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                '×',
+                                                style: TextStyle(
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .onSurfaceVariant,
+                                                  fontWeight: FontWeight.w900,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
                                       ),
                                   ],
                                 ),
@@ -621,33 +663,10 @@ class _ClassCreateScreenState extends State<ClassCreateScreen> {
                           ),
                         );
 
-                        final summary = ReactCard(
-                          header: const ReactCardHeader(
-                            icon: Icons.check_circle_outline,
-                            title: 'Summary',
-                            subtitle: 'Review before creating',
-                          ),
+                        final actions = ReactCard(
+                          header: const SizedBox.shrink(),
                           child: Column(
                             children: [
-                              _SummaryRow(
-                                label: 'Category',
-                                value: _category.trim().isEmpty
-                                    ? '-'
-                                    : _category.trim(),
-                              ),
-                              const SizedBox(height: 10),
-                              _SummaryRow(
-                                label: 'Difficulty',
-                                value: _difficulty,
-                              ),
-                              const SizedBox(height: 10),
-                              _SummaryRow(
-                                label: 'Price',
-                                value: _price.text.trim().isEmpty
-                                    ? '-'
-                                    : 'INR ${_price.text.trim()}',
-                              ),
-                              const SizedBox(height: 14),
                               SizedBox(
                                 width: double.infinity,
                                 child: FilledButton(
@@ -678,13 +697,35 @@ class _ClassCreateScreenState extends State<ClassCreateScreen> {
                                         ),
                                 ),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 10),
                               SizedBox(
                                 width: double.infinity,
-                                child: TextButton(
-                                  onPressed: () =>
-                                      context.go('/dashboard?tab=classes'),
-                                  child: const Text('Cancel'),
+                                child: OutlinedButton(
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    side: BorderSide(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.12,
+                                      ),
+                                    ),
+                                    foregroundColor: Colors.black87,
+                                  ),
+                                  onPressed: _submitting
+                                      ? null
+                                      : () => context.go(
+                                          '/dashboard?tab=classes',
+                                        ),
+                                  child: const Text(
+                                    'Cancel',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ],
@@ -702,7 +743,7 @@ class _ClassCreateScreenState extends State<ClassCreateScreen> {
                               const SizedBox(height: 14),
                               equipment,
                               const SizedBox(height: 14),
-                              summary,
+                              actions,
                             ],
                           );
                         }
@@ -725,7 +766,7 @@ class _ClassCreateScreenState extends State<ClassCreateScreen> {
                               ),
                             ),
                             const SizedBox(width: 14),
-                            Expanded(child: Column(children: [summary])),
+                            Expanded(child: Column(children: [actions])),
                           ],
                         );
                       },
@@ -734,28 +775,6 @@ class _ClassCreateScreenState extends State<ClassCreateScreen> {
                 ],
               ),
             ),
-    );
-  }
-}
-
-class _SummaryRow extends StatelessWidget {
-  const _SummaryRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(color: muted, fontWeight: FontWeight.w700),
-        ),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.w900)),
-      ],
     );
   }
 }

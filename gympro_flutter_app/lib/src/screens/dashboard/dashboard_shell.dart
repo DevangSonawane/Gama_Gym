@@ -9,7 +9,6 @@ import '../analytics/analytics_tab.dart';
 import '../classes/classes_tab.dart';
 import '../members/members_tab.dart';
 import '../overview/overview_tab.dart';
-import '../payments/payments_tab.dart';
 import '../staff/staff_tab.dart';
 import '../../ui/app_search.dart';
 import '../../ui/app_surfaces.dart';
@@ -98,13 +97,6 @@ class DashboardShell extends StatelessWidget {
             roles: [AppRole.manager, AppRole.admin],
           ),
           const _NavItem(
-            id: 'payments',
-            label: 'Payments',
-            icon: Icons.payments_outlined,
-            tab: 'payments',
-            roles: [AppRole.staff, AppRole.manager, AppRole.admin],
-          ),
-          const _NavItem(
             id: 'analytics',
             label: 'Analytics',
             icon: Icons.bar_chart_outlined,
@@ -134,8 +126,6 @@ class DashboardShell extends StatelessWidget {
               return MembersTab(authController: authController);
             case 'staff':
               return StaffTab(authController: authController);
-            case 'payments':
-              return PaymentsTab(authController: authController);
             case 'users':
               return _UsersTab(authController: authController);
             case 'classes':

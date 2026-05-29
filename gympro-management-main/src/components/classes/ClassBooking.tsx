@@ -330,7 +330,7 @@ const ClassBooking: React.FC = () => {
                 </div>
                 <div className="text-right">
                   <div className="text-lg font-bold text-[#00bc7d]">
-                    ${schedule.class.price}
+                    ₹{schedule.class.price}
                   </div>
                   <div className="text-xs text-gray-400">per session</div>
                 </div>
@@ -419,7 +419,7 @@ const ClassBooking: React.FC = () => {
                 </div>
                 <div className="pt-3 border-t border-gray-200 flex justify-between items-center">
                   <span className="font-medium text-gray-900">Total</span>
-                  <span className="text-xl font-bold text-[#00bc7d]">${selectedClass.class.price}</span>
+                  <span className="text-xl font-bold text-[#00bc7d]">₹{selectedClass.class.price}</span>
                 </div>
               </div>
               

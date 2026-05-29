@@ -12,6 +12,8 @@ class Member {
     this.weight,
     this.heightCm,
     this.trainerId,
+    this.billingCycle,
+    this.address,
     this.emergencyContactName,
     this.emergencyContactPhone,
     this.emergencyContactRelationship,
@@ -31,6 +33,8 @@ class Member {
   final double? weight;
   final double? heightCm;
   final String? trainerId;
+  final String? billingCycle;
+  final String? address;
   final String? emergencyContactName;
   final String? emergencyContactPhone;
   final String? emergencyContactRelationship;
@@ -65,6 +69,8 @@ class Member {
       weight: parseNum(row['weight']),
       heightCm: parseNum(row['height']),
       trainerId: row['trainer_id'] as String?,
+      billingCycle: row['billing_cycle'] as String?,
+      address: row['address'] as String?,
       emergencyContactName: row['emergency_contact_name'] as String?,
       emergencyContactPhone: row['emergency_contact_phone'] as String?,
       emergencyContactRelationship:

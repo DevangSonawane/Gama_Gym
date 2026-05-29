@@ -17,7 +17,7 @@ import {
   ArrowLeft,
   UserCheck,
   Briefcase,
-  DollarSign,
+  IndianRupee,
   Phone,
   Mail,
   CheckCircle2,
@@ -436,7 +436,7 @@ const StaffEdit: React.FC = () => {
                       <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 pb-4">
                         <div className="flex items-center gap-2">
                           <div className="p-2 bg-[#00bc7d]/10 rounded-lg">
-                            <DollarSign className="h-5 w-5 text-[#00bc7d]" />
+                            <IndianRupee className="h-5 w-5 text-[#00bc7d]" />
                           </div>
                           <CardTitle className="text-lg text-gray-900">Compensation</CardTitle>
                         </div>
@@ -444,9 +444,9 @@ const StaffEdit: React.FC = () => {
                       </CardHeader>
                       <CardContent className="p-6 space-y-6">
                         <div className="space-y-2">
-                          <Label htmlFor="salary">Annual Salary ($)</Label>
+                          <Label htmlFor="salary">Annual Salary (₹)</Label>
                           <div className="relative">
-                            <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                            <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                             <Input
                               id="salary"
                               type="number"

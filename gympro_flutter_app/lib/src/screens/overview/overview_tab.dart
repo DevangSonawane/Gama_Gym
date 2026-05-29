@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../auth/auth_controller.dart';
+import '../../data/classes_repository.dart';
+import '../../data/equipment_repository.dart';
 import '../../data/members_repository.dart';
 import '../../data/payments_repository.dart';
 import '../../ui/app_tokens.dart';
@@ -16,10 +18,14 @@ class OverviewTab extends StatefulWidget {
 }
 
 class OverviewTabState extends State<OverviewTab> {
+  final _classesRepo = ClassesRepository();
+  final _equipmentRepo = EquipmentRepository();
   final _membersRepo = MembersRepository();
   final _paymentsRepo = PaymentsRepository();
 
   int? _memberCount;
+  int? _activeClasses;
+  int? _equipmentOkPct;
   double? _monthlyRevenue;
   bool _loading = true;
 
@@ -36,29 +42,61 @@ class OverviewTabState extends State<OverviewTab> {
 
   Future<void> _load() async {
     _safeSetState(() => _loading = true);
+    final now = DateTime.now();
+    final startOfMonth = DateTime(now.year, now.month, 1);
+    final startOfNextMonth = DateTime(now.year, now.month + 1, 1);
+
+    int? memberCount;
+    double? monthlyRevenue;
+    int? activeClasses;
+    int? equipmentOkPct;
+
     try {
       final members = await _membersRepo.listMembers();
-      final payments = await _paymentsRepo.listPayments();
-
-      final now = DateTime.now();
-      final startOfMonth = DateTime(now.year, now.month, 1);
-      final revenue = payments
-          .where((p) => p.status.toUpperCase() == 'COMPLETED')
-          .where((p) => (p.paidDate ?? p.dueDate ?? now).isAfter(startOfMonth))
-          .fold<double>(0, (sum, p) => sum + p.amount);
-
-      _safeSetState(() {
-        _memberCount = members.length;
-        _monthlyRevenue = revenue;
-      });
+      memberCount = members.length;
     } catch (_) {
-      _safeSetState(() {
-        _memberCount = null;
-        _monthlyRevenue = null;
-      });
-    } finally {
-      _safeSetState(() => _loading = false);
+      memberCount = null;
     }
+
+    try {
+      final payments = await _paymentsRepo.listPayments();
+      monthlyRevenue = payments
+          .where((p) => p.status.toUpperCase() == 'COMPLETED')
+          .where((p) {
+            final d = (p.paidDate ?? p.dueDate ?? now);
+            return !d.isBefore(startOfMonth) && d.isBefore(startOfNextMonth);
+          })
+          .fold<double>(0, (sum, p) => sum + p.amount);
+    } catch (_) {
+      monthlyRevenue = null;
+    }
+
+    try {
+      final schedules = await _classesRepo.listSchedules();
+      activeClasses = schedules.where((s) {
+        final st = s.status.trim().toLowerCase();
+        final isActiveStatus = st != 'cancelled' && st != 'canceled';
+        final inMonth =
+            !s.date.isBefore(startOfMonth) && s.date.isBefore(startOfNextMonth);
+        return isActiveStatus && inMonth;
+      }).length;
+    } catch (_) {
+      activeClasses = null;
+    }
+
+    try {
+      equipmentOkPct = await _equipmentRepo.fetchOkPercentage();
+    } catch (_) {
+      equipmentOkPct = null;
+    }
+
+    _safeSetState(() {
+      _memberCount = memberCount;
+      _monthlyRevenue = monthlyRevenue;
+      _activeClasses = activeClasses;
+      _equipmentOkPct = equipmentOkPct;
+      _loading = false;
+    });
   }
 
   @override
@@ -73,15 +111,6 @@ class OverviewTabState extends State<OverviewTab> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
           children: [
-            // If this doesn't render, the issue is upstream (routing/layout/renderer),
-            // not the dashboard widgets.
-            Text(
-              'Overview',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
-            ),
-            const SizedBox(height: 10),
             _IntroSection(
               firstName: user.firstName,
               onMembers: () => context.go('/dashboard?tab=members'),
@@ -157,14 +186,20 @@ class OverviewTabState extends State<OverviewTab> {
               children: [
                 _MetricCard(
                   title: 'Total Members',
-                  value: _loading ? null : (_memberCount?.toString() ?? '—'),
+                  value: _loading
+                      ? null
+                      : (_memberCount == null ? '—' : _fmtInt(_memberCount!)),
                   icon: Icons.people_outline,
                   gradient: const [Color(0xFF00BC7D), Color(0xFF009664)],
                   onTap: () => context.go('/dashboard?tab=members'),
                 ),
                 _MetricCard(
                   title: 'Active Classes',
-                  value: '—',
+                  value: _loading
+                      ? null
+                      : (_activeClasses == null
+                            ? '—'
+                            : _fmtInt(_activeClasses!)),
                   icon: Icons.calendar_month_outlined,
                   gradient: const [Color(0xFF00BC7D), Color(0xFF10B981)],
                   onTap: () => context.go('/dashboard?tab=classes'),
@@ -175,14 +210,18 @@ class OverviewTabState extends State<OverviewTab> {
                       ? null
                       : (_monthlyRevenue == null
                             ? '—'
-                            : 'INR ${_monthlyRevenue!.toStringAsFixed(0)}'),
+                            : 'INR ${_fmtMoney0(_monthlyRevenue!)}'),
                   icon: Icons.payments_outlined,
                   gradient: const [Color(0xFF10B981), Color(0xFF14B8A6)],
                   onTap: () => context.go('/dashboard?tab=payments'),
                 ),
                 _MetricCard(
                   title: 'Equipment Status',
-                  value: '—',
+                  value: _loading
+                      ? null
+                      : (_equipmentOkPct == null
+                            ? '—'
+                            : _fmtInt(_equipmentOkPct!)),
                   icon: Icons.fitness_center,
                   gradient: const [Color(0xFF00BC7D), Color(0xFF0EA5E9)],
                   onTap: () {},
@@ -194,6 +233,14 @@ class OverviewTabState extends State<OverviewTab> {
       ),
     );
   }
+}
+
+String _fmtMoney0(double v) => _fmtInt(v.round());
+
+String _fmtInt(int v) {
+  final s = v.toString();
+  final re = RegExp(r'(\d)(?=(\d{3})+(?!\d))');
+  return s.replaceAllMapped(re, (m) => '${m[1]},');
 }
 
 class _SectionHeader extends StatelessWidget {
@@ -363,27 +410,38 @@ class _IntroSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
+          Row(
             children: [
-              OutlinedButton.icon(
-                onPressed: onMembers,
-                icon: const Icon(Icons.people_outline, size: 18),
-                label: const Text('Members'),
-                style: OutlinedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onMembers,
+                  icon: const Icon(Icons.people_outline, size: 18),
+                  label: const Text('Members'),
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 14,
+                    ),
                   ),
                 ),
               ),
-              OutlinedButton.icon(
-                onPressed: onSchedule,
-                icon: const Icon(Icons.calendar_month_outlined, size: 18),
-                label: const Text('Schedule'),
-                style: OutlinedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onSchedule,
+                  icon: const Icon(Icons.calendar_month_outlined, size: 18),
+                  label: const Text('Schedule'),
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 14,
+                    ),
                   ),
                 ),
               ),

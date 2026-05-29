@@ -212,10 +212,12 @@ class _MembersTabState extends State<MembersTab> {
                 children: [
                   const _MembersHeader(),
                   const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: [bulkUpload, addMember],
+                  Row(
+                    children: [
+                      Expanded(child: bulkUpload),
+                      const SizedBox(width: 10),
+                      Expanded(child: addMember),
+                    ],
                   ),
                 ],
               );

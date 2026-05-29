@@ -17,7 +17,7 @@ import { createInvoiceForPayment } from '@/lib/invoices';
 import {
   ArrowLeft,
   CreditCard,
-  DollarSign,
+  IndianRupee,
   User,
   Tag,
   FileText,
@@ -293,7 +293,7 @@ const PaymentCreate: React.FC = () => {
                       <CardHeader className="bg-gradient-to-r from-[#00bc7d] to-[#009664] text-white pb-6 relative overflow-hidden">
                         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10"></div>
                         <div className="relative z-10 flex items-center gap-2">
-                          <DollarSign className="h-5 w-5" />
+                          <IndianRupee className="h-5 w-5" />
                           <CardTitle className="text-lg text-white">Total Amount</CardTitle>
                         </div>
                         <CardDescription className="text-[#00bc7d]-100 relative z-10 opacity-90">Enter payment amount</CardDescription>
@@ -302,7 +302,7 @@ const PaymentCreate: React.FC = () => {
                         <div className="space-y-2">
                           <Label htmlFor="amount" className="sr-only">Amount</Label>
                           <div className="relative">
-                            <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 h-8 w-8 text-gray-400" />
+                            <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 h-8 w-8 text-gray-400" />
                             <Input
                               id="amount"
                               type="number"
@@ -318,15 +318,15 @@ const PaymentCreate: React.FC = () => {
                         <div className="bg-[#00bc7d]/5 rounded-xl p-4 border border-[#00bc7d]/10">
                           <div className="flex justify-between items-center mb-2">
                             <span className="text-sm text-gray-600">Subtotal</span>
-                            <span className="font-semibold text-gray-900">${formData.amount || '0.00'}</span>
+                            <span className="font-semibold text-gray-900">₹{formData.amount || '0.00'}</span>
                           </div>
                           <div className="flex justify-between items-center mb-2">
                             <span className="text-sm text-gray-600">Tax (0%)</span>
-                            <span className="font-semibold text-gray-900">$0.00</span>
+                            <span className="font-semibold text-gray-900">₹0.00</span>
                           </div>
                           <div className="border-t border-[#00bc7d]/10 my-2 pt-2 flex justify-between items-center">
                             <span className="font-bold text-gray-900">Total</span>
-                            <span className="font-bold text-xl text-[#00bc7d]">${formData.amount || '0.00'}</span>
+                            <span className="font-bold text-xl text-[#00bc7d]">₹{formData.amount || '0.00'}</span>
                           </div>
                         </div>
 

@@ -38,13 +38,18 @@ import {
   CreditCard,
   Activity,
   ShieldAlert,
-  FileText
+  FileText,
+  Receipt,
+  Download
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import BulkUploadModal from './BulkUploadModal';
 import { supabase, DEFAULT_GYM_ID } from '@/lib/supabase';
 import { toast } from 'sonner';
 import PageLoader from '@/components/ui/PageLoader';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import logoImg from '@/asset/gamalog.png';
 
 const MemberManagement: React.FC = () => {
   const navigate = useNavigate();
@@ -72,6 +77,7 @@ const MemberManagement: React.FC = () => {
     weight?: string | null;
     height?: string | null;
     membership_type: 'Gym' | 'Gym + Cardio' | 'Gym + Cardio + Crossfit';
+    plan_price?: string | number | null;
     status: 'ACTIVE' | 'INACTIVE';
     created_at: string;
     updated_at: string;
@@ -106,6 +112,7 @@ const MemberManagement: React.FC = () => {
       heightFeet,
       heightInches,
       membershipType: dbMember.membership_type as 'Gym' | 'Gym + Cardio' | 'Gym + Cardio + Crossfit',
+      planPrice: dbMember.plan_price ? Number(dbMember.plan_price) : undefined,
       membershipStartDate: new Date(),
       membershipEndDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
       isActive: dbMember.status === 'ACTIVE',
@@ -168,13 +175,13 @@ const MemberManagement: React.FC = () => {
   const getMembershipPrice = (membership: string) => {
     switch (membership) {
       case 'Gym':
-        return 39.99;
+        return 999;
       case 'Gym + Cardio':
-        return 59.99;
+        return 1999;
       case 'Gym + Cardio + Crossfit':
-        return 89.99;
+        return 3499;
       default:
-        return 39.99;
+        return 999;
     }
   };
 
@@ -447,19 +454,19 @@ const MemberManagement: React.FC = () => {
                       <SelectItem value="Gym" className="focus:bg-[#00bc7d]/10 focus:text-[#00bc7d]">
                         <div className="flex items-center gap-2">
                           <span className="font-medium">Gym Only</span>
-                          <Badge variant="outline" className="ml-auto border-[#00bc7d]/20 text-[#00bc7d] bg-[#00bc7d]/5">$39.99</Badge>
+                          <Badge variant="outline" className="ml-auto border-[#00bc7d]/20 text-[#00bc7d] bg-[#00bc7d]/5">₹39.99</Badge>
                         </div>
                       </SelectItem>
                       <SelectItem value="Gym + Cardio" className="focus:bg-[#00bc7d]/10 focus:text-[#00bc7d]">
                         <div className="flex items-center gap-2">
                           <span className="font-medium">Gym + Cardio</span>
-                          <Badge variant="outline" className="ml-auto border-teal-200 text-teal-700 bg-teal-50">$59.99</Badge>
+                          <Badge variant="outline" className="ml-auto border-teal-200 text-teal-700 bg-teal-50">₹59.99</Badge>
                         </div>
                       </SelectItem>
                       <SelectItem value="Gym + Cardio + Crossfit" className="focus:bg-[#00bc7d]/10 focus:text-[#00bc7d]">
                         <div className="flex items-center gap-2">
                           <span className="font-medium">Full Package</span>
-                          <Badge variant="outline" className="ml-auto border-emerald-200 text-emerald-700 bg-emerald-50">$89.99</Badge>
+                          <Badge variant="outline" className="ml-auto border-emerald-200 text-emerald-700 bg-emerald-50">₹89.99</Badge>
                         </div>
                       </SelectItem>
                     </SelectContent>
@@ -786,7 +793,7 @@ const MemberManagement: React.FC = () => {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Monthly Fee</span>
-                <span className="font-bold text-lg">${getMembershipPrice(member.membershipType)}</span>
+                <span className="font-bold text-lg">₹{getMembershipPrice(member.membershipType)}</span>
               </div>
             </div>
 
@@ -871,6 +878,265 @@ const MemberManagement: React.FC = () => {
       </div>
     </div>
   );
+
+  const handleDownloadReceipt = async (member: Member) => {
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 14;
+      const contentWidth = pageWidth - 2 * margin;
+
+      // ── Page background ──────────────────────────────────────────────
+      doc.setFillColor(244, 247, 250);
+      doc.rect(0, 0, pageWidth, pageHeight, 'F');
+
+      // ── White header bar ─────────────────────────────────────────────
+      doc.setFillColor(255, 255, 255);
+      doc.rect(0, 0, pageWidth, 58, 'F');
+
+      // Green accent strip under header
+      doc.setFillColor(0, 188, 125);
+      doc.rect(0, 58, pageWidth, 4, 'F');
+
+      // Thin top green stripe
+      doc.setFillColor(0, 188, 125);
+      doc.rect(0, 0, pageWidth, 3, 'F');
+
+      // Logo (gamalog.png is on white so it renders perfectly on white header)
+      try {
+        const img = new Image();
+        img.src = logoImg;
+        await new Promise(resolve => { img.onload = resolve; });
+        doc.addImage(img, 'PNG', margin, 8, 55, 22);
+      } catch {
+        doc.setTextColor(0, 150, 100);
+        doc.setFontSize(20);
+        doc.setFont('helvetica', 'bold');
+        doc.text('GAMA', margin + 2, 26);
+      }
+
+      // Gym name + contact (right-aligned in header, dark text on white)
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.text('GAMA FITNESS CENTER', pageWidth - margin, 18, { align: 'right' });
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 116, 139);
+      doc.text('support@gamagym.com  |  www.gamagym.com', pageWidth - margin, 27, { align: 'right' });
+      doc.text('+91 98765 43210  |  123 Fitness Street, Mumbai', pageWidth - margin, 35, { align: 'right' });
+
+      // RECEIPT label bottom-left of header
+      doc.setTextColor(0, 188, 125);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      doc.text('MEMBERSHIP RECEIPT', margin, 52);
+
+      // ── Receipt meta strip ───────────────────────────────────────────
+      const receiptNumber = `REC-${Date.now().toString().slice(-8)}`;
+      const receiptDate = new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' });
+
+      doc.setFillColor(15, 23, 42);
+      doc.roundedRect(margin, 68, contentWidth, 24, 4, 4, 'F');
+
+      // Labels
+      doc.setTextColor(100, 116, 139);
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'normal');
+      doc.text('RECEIPT NUMBER', margin + 8, 76);
+      doc.text('DATE ISSUED', pageWidth / 2 - 10, 76);
+      doc.text('STATUS', pageWidth - margin - 8, 76, { align: 'right' });
+
+      // Values
+      doc.setTextColor(226, 232, 240);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text(receiptNumber, margin + 8, 86);
+      doc.text(receiptDate, pageWidth / 2 - 10, 86);
+
+      // PAID badge
+      doc.setFillColor(0, 188, 125);
+      doc.roundedRect(pageWidth - margin - 32, 78, 26, 10, 2, 2, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica', 'bold');
+      doc.text('PAID', pageWidth - margin - 19, 85, { align: 'center' });
+
+      let y = 102;
+
+      // ── Section helper ───────────────────────────────────────────────
+      const drawSectionHeader = (title: string, yPos: number) => {
+        doc.setFillColor(0, 188, 125);
+        doc.rect(margin, yPos, 3, 12, 'F');
+        doc.setTextColor(15, 23, 42);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text(title, margin + 8, yPos + 8);
+      };
+
+      // ── Member Information ───────────────────────────────────────────
+      drawSectionHeader('MEMBER INFORMATION', y);
+      y += 16;
+
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(margin, y, contentWidth, 44, 4, 4, 'F');
+
+      // Avatar circle with initials
+      doc.setFillColor(209, 250, 229);
+      doc.circle(margin + 20, y + 22, 14, 'F');
+      doc.setTextColor(0, 150, 100);
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      const initials = `${member.firstName[0]}${member.lastName[0]}`;
+      doc.text(initials, margin + 20, y + 26.5, { align: 'center' });
+
+      // Two-column info layout
+      const c1 = margin + 42;
+      const c2 = pageWidth / 2 + 6;
+
+      doc.setTextColor(100, 116, 139);
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'normal');
+      doc.text('FULL NAME', c1, y + 9);
+      doc.text('EMAIL ADDRESS', c2, y + 9);
+
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${member.firstName} ${member.lastName}`, c1, y + 17);
+
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text(member.email, c2, y + 17);
+
+      doc.setTextColor(100, 116, 139);
+      doc.setFontSize(7);
+      doc.text('PHONE NUMBER', c1, y + 27);
+      doc.text('DATE OF BIRTH', c2, y + 27);
+
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text(member.phone || 'Not provided', c1, y + 35);
+      doc.text(member.dateOfBirth.toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }), c2, y + 35);
+
+      y += 54;
+
+      // ── Membership Details ───────────────────────────────────────────
+      drawSectionHeader('MEMBERSHIP DETAILS', y);
+      y += 16;
+
+      autoTable(doc, {
+        body: [
+          ['Membership Plan', member.membershipType],
+          ['Account Status', member.isActive ? 'Active' : 'Inactive'],
+          ['Member Since', member.createdAt.toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })],
+          ['Valid From', member.membershipStartDate.toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })],
+          ['Valid Until', member.membershipEndDate.toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })],
+        ],
+        startY: y,
+        theme: 'plain',
+        styles: {
+          fontSize: 9.5,
+          cellPadding: { top: 6, right: 10, bottom: 6, left: 10 },
+          textColor: [15, 23, 42],
+        },
+        alternateRowStyles: { fillColor: [240, 253, 244] },
+        columnStyles: {
+          0: { fontStyle: 'bold', cellWidth: 65, textColor: [71, 85, 105], fontSize: 8.5 },
+          1: { cellWidth: 'auto' },
+        },
+        margin: { left: margin, right: margin },
+        tableLineColor: [226, 232, 240],
+        tableLineWidth: 0.3,
+      });
+
+      y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 14;
+
+      // ── Payment Summary ──────────────────────────────────────────────
+      drawSectionHeader('PAYMENT SUMMARY', y);
+      y += 16;
+
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(margin, y, contentWidth, 58, 4, 4, 'F');
+
+      const baseFee = getMembershipPrice(member.membershipType) * 80;
+      const gst = baseFee * 0.18;
+      const total = baseFee + gst;
+      const fmtINR = (n: number) => `₹${n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+      const lx = margin + 10;
+      const rx = pageWidth - margin - 10;
+
+      // Row 1: base fee
+      doc.setTextColor(71, 85, 105);
+      doc.setFontSize(9.5);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Monthly Membership Fee', lx, y + 13);
+      doc.setTextColor(15, 23, 42);
+      doc.text(fmtINR(baseFee), rx, y + 13, { align: 'right' });
+
+      // Row 2: GST
+      doc.setTextColor(71, 85, 105);
+      doc.text('GST (18%)', lx, y + 25);
+      doc.setTextColor(15, 23, 42);
+      doc.text(fmtINR(gst), rx, y + 25, { align: 'right' });
+
+      // Divider
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.4);
+      doc.line(margin + 6, y + 32, pageWidth - margin - 6, y + 32);
+
+      // Total row (dark pill)
+      doc.setFillColor(15, 23, 42);
+      doc.roundedRect(margin + 6, y + 37, contentWidth - 12, 14, 3, 3, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('TOTAL AMOUNT', lx, y + 47);
+      doc.setTextColor(0, 188, 125);
+      doc.text(fmtINR(total), rx, y + 47, { align: 'right' });
+
+      y += 68;
+
+      // ── Disclaimer note ──────────────────────────────────────────────
+      doc.setFillColor(254, 252, 232);
+      doc.roundedRect(margin, y, contentWidth, 20, 3, 3, 'F');
+      doc.setDrawColor(253, 224, 71);
+      doc.setLineWidth(0.4);
+      doc.roundedRect(margin, y, contentWidth, 20, 3, 3, 'S');
+
+      doc.setTextColor(133, 77, 14);
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica', 'bold');
+      doc.text('NOTE:', margin + 6, y + 8);
+      doc.setFont('helvetica', 'normal');
+      doc.text('This is a computer-generated receipt and does not require a physical signature.', margin + 22, y + 8);
+      doc.text('Please retain this for your records. Queries? Reach us at support@gamagym.com', margin + 6, y + 15);
+
+      // ── Footer ───────────────────────────────────────────────────────
+      doc.setFillColor(15, 23, 42);
+      doc.rect(0, pageHeight - 28, pageWidth, 28, 'F');
+      doc.setFillColor(0, 188, 125);
+      doc.rect(0, pageHeight - 28, pageWidth, 2, 'F');
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(10.5);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Thank you for being part of the GAMA Family!', pageWidth / 2, pageHeight - 17, { align: 'center' });
+      doc.setTextColor(100, 116, 139);
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica', 'normal');
+      doc.text('support@gamagym.com  •  www.gamagym.com  •  +91 98765 43210', pageWidth / 2, pageHeight - 8, { align: 'center' });
+
+      doc.save(`Receipt_${member.firstName}_${member.lastName}_${receiptNumber}.pdf`);
+      toast.success('Receipt downloaded successfully!');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Failed to download receipt');
+    }
+  };
 
   const stats = {
     totalMembers: members.length,
@@ -1053,7 +1319,7 @@ const MemberManagement: React.FC = () => {
                           {member.membershipType}
                         </Badge>
                         <span className="text-xs text-gray-500 font-medium ml-1">
-                          ${getMembershipPrice(member.membershipType)}/mo
+                          ₹{member.planPrice ?? getMembershipPrice(member.membershipType)}/mo
                         </span>
                       </div>
                     </TableCell>
@@ -1062,9 +1328,6 @@ const MemberManagement: React.FC = () => {
                         <div className="text-gray-900 font-medium flex items-center gap-1.5">
                           <Calendar className="h-3.5 w-3.5 text-gray-400" />
                           {member.membershipStartDate.toLocaleDateString()}
-                        </div>
-                        <div className="text-xs text-gray-400">
-                          {calculateAge(member.dateOfBirth)} years old
                         </div>
                       </div>
                     </TableCell>
@@ -1076,6 +1339,15 @@ const MemberManagement: React.FC = () => {
                     </TableCell>
                     <TableCell className="py-5 text-right pr-8">
                       <div className="flex justify-end gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDownloadReceipt(member)}
+                          className="h-9 w-9 rounded-xl text-gray-500 hover:bg-[#00bc7d]/10 hover:text-[#00bc7d] hover:scale-105 transition-all"
+                          title="Download Receipt"
+                        >
+                          <Receipt className="h-4 w-4" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"

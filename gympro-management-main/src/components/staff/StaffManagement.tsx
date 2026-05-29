@@ -15,7 +15,7 @@ import {
   Calendar,
   Phone,
   Mail,
-  DollarSign,
+  IndianRupee,
   Clock,
   Award,
   Users,
@@ -226,7 +226,7 @@ const StaffManagement: React.FC = () => {
           { label: 'Total Staff', value: staff.length, icon: Users, color: 'text-[#00bc7d]', bg: 'bg-[#00bc7d]/10', border: 'border-[#00bc7d]/20', delay: 0.1 },
           { label: 'Trainers', value: staff.filter(s => s.role === UserRole.TRAINER).length, icon: UserPlus, color: 'text-blue-600', bg: 'bg-blue-500/10', border: 'border-blue-200', delay: 0.2 },
           { label: 'Support Staff', value: staff.filter(s => s.role === UserRole.STAFF).length, icon: Award, color: 'text-purple-600', bg: 'bg-purple-500/10', border: 'border-purple-200', delay: 0.3 },
-          { label: 'Avg. Salary', value: `$${Math.round(staff.reduce((sum, s) => sum + s.salary, 0) / (staff.length || 1)).toLocaleString()}`, icon: DollarSign, color: 'text-orange-600', bg: 'bg-orange-500/10', border: 'border-orange-200', delay: 0.4 },
+          { label: 'Avg. Salary', value: `₹${Math.round(staff.reduce((sum, s) => sum + s.salary, 0) / (staff.length || 1)).toLocaleString()}`, icon: IndianRupee, color: 'text-orange-600', bg: 'bg-orange-500/10', border: 'border-orange-200', delay: 0.4 },
         ].map((stat, index) => (
           <motion.div
             key={stat.label}
@@ -308,7 +308,7 @@ const StaffManagement: React.FC = () => {
               {filteredStaff.map((staffMember, index) => {
                 const tenureYears = calculateTenure(staffMember.hireDate);
                 const experienceLabel = `${Math.max(0, staffMember.yearsExperience || 0)} yrs`;
-                const salaryLabel = staffMember.salary ? `$${staffMember.salary.toLocaleString()}` : 'N/A';
+                const salaryLabel = staffMember.salary ? `₹${staffMember.salary.toLocaleString()}` : 'N/A';
 
                 return (
                   <motion.div
@@ -387,7 +387,7 @@ const StaffManagement: React.FC = () => {
                       </div>
                       <div className="rounded-2xl bg-gray-50 border border-gray-100 p-3">
                         <div className="flex items-center gap-2 text-gray-900 font-semibold">
-                          <DollarSign className="h-4 w-4 text-[#00bc7d]" />
+                          <IndianRupee className="h-4 w-4 text-[#00bc7d]" />
                           {salaryLabel}
                         </div>
                         <p className="text-xs text-gray-500">Salary</p>

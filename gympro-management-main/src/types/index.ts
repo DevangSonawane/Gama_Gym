@@ -36,6 +36,7 @@ export interface Member extends User {
     relationship: string;
   };
   membershipType: 'Gym' | 'Gym + Cardio' | 'Gym + Cardio + Crossfit';
+  planPrice?: number;
   membershipStartDate: Date;
   membershipEndDate: Date;
   isActive: boolean;

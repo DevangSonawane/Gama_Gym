@@ -106,7 +106,7 @@ const PaymentSystem: React.FC = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [selectedStatus, setSelectedStatus] = useState<'all' | PaymentStatus>('all');
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -147,7 +147,7 @@ const PaymentSystem: React.FC = () => {
         const { data: promoData, error: promoError } = await supabase
           .from('promo_codes')
           .select('*')
-          .order('created_at', { ascending: false });
+          .order('valid_from', { ascending: false });
 
         if (promoError) throw promoError;
 
@@ -184,7 +184,7 @@ const PaymentSystem: React.FC = () => {
             issueDate: new Date(i.issue_date),
             dueDate: new Date(i.due_date),
             paidDate: i.paid_date ? new Date(i.paid_date) : undefined,
-            status: i.status,
+            status: (i.status?.toLowerCase() ?? 'draft') as Invoice['status'],
             items: (i.items as Invoice['items']) || [],
             invoiceNumber: i.invoice_number || undefined,
             gstin: i.gstin || undefined,
@@ -351,7 +351,7 @@ const PaymentSystem: React.FC = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         {[
-          { label: 'Total Revenue', value: `$${stats.totalRevenue.toFixed(2)}`, icon: DollarSign, gradient: 'from-[#00bc7d] to-emerald-600', delay: 0.1 },
+          { label: 'Total Revenue', value: `₹${stats.totalRevenue.toFixed(2)}`, icon: DollarSign, gradient: 'from-[#00bc7d] to-emerald-600', delay: 0.1 },
           { label: 'Completed', value: stats.completedPayments, icon: CheckCircle, gradient: 'from-[#00bc7d] to-teal-500', delay: 0.2 },
           { label: 'Pending', value: stats.pendingPayments, icon: Clock, gradient: 'from-amber-400 to-orange-500', delay: 0.3 },
           { label: 'Overdue', value: stats.overduePayments, icon: AlertCircle, gradient: 'from-red-500 to-rose-600', delay: 0.4 },
@@ -494,7 +494,7 @@ const PaymentSystem: React.FC = () => {
                           <TableCell className="font-medium text-gray-900">{payment.memberId}</TableCell>
                           <TableCell className="max-w-[200px] truncate text-gray-500">{payment.description}</TableCell>
                           <TableCell className="font-bold text-gray-900">
-                            ${payment.amount.toFixed(2)}
+                            ₹{payment.amount.toFixed(2)}
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline" className={`${getMethodColor(payment.method)} rounded-lg px-2 py-0.5 font-normal`}>
@@ -573,12 +573,12 @@ const PaymentSystem: React.FC = () => {
                         >
                           <TableCell className="pl-6 font-mono text-sm text-gray-500">#{invoice.id.slice(0, 8)}</TableCell>
                           <TableCell className="font-medium text-gray-900">{invoice.memberId}</TableCell>
-                          <TableCell className="font-bold text-gray-900">${invoice.amount.toFixed(2)}</TableCell>
+                          <TableCell className="font-bold text-gray-900">₹{invoice.amount.toFixed(2)}</TableCell>
                           <TableCell className="text-gray-500">{invoice.issueDate.toLocaleDateString()}</TableCell>
                           <TableCell className="text-gray-500">{invoice.dueDate.toLocaleDateString()}</TableCell>
                           <TableCell>
-                            <Badge variant="outline" className={`rounded-lg px-2 py-0.5 font-normal ${invoice.status === 'PAID' ? 'bg-[#00bc7d]/10 text-[#00bc7d] border-[#00bc7d]/20' :
-                              invoice.status === 'OVERDUE' ? 'bg-red-50 text-red-600 border-red-200' :
+                            <Badge variant="outline" className={`rounded-lg px-2 py-0.5 font-normal ${invoice.status === 'paid' ? 'bg-[#00bc7d]/10 text-[#00bc7d] border-[#00bc7d]/20' :
+                              invoice.status === 'overdue' ? 'bg-red-50 text-red-600 border-red-200' :
                                 'bg-yellow-50 text-yellow-600 border-yellow-200'
                               }`}>
                               {invoice.status}
@@ -670,7 +670,7 @@ const PaymentSystem: React.FC = () => {
                             </div>
                           </TableCell>
                           <TableCell className="font-medium text-gray-900">
-                            {promo.type === 'percentage' ? `${promo.value}%` : `$${promo.value}`}
+                            {promo.type === 'percentage' ? `${promo.value}%` : `₹${promo.value}`}
                           </TableCell>
                           <TableCell>
                             <Badge variant={promo.isActive ? 'default' : 'secondary'} className={`rounded-lg px-2 py-0.5 font-normal ${promo.isActive

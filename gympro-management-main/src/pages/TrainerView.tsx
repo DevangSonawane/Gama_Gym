@@ -31,7 +31,7 @@ type DbTrainer = {
   email: string;
   first_name: string;
   last_name: string;
-  phone?: string | null;
+  phone_number?: string | null;
   bio?: string | null;
   profile_image?: string | null;
   specializations?: string[] | null;
@@ -46,7 +46,7 @@ const mapSupabaseTrainerToTrainer = (dbTrainer: DbTrainer): Trainer => {
     email: dbTrainer.email,
     firstName: dbTrainer.first_name,
     lastName: dbTrainer.last_name,
-    phone: dbTrainer.phone || '',
+    phone: dbTrainer.phone_number || '',
     bio: dbTrainer.bio || '',
     profileImage: dbTrainer.profile_image || '',
     specialization: dbTrainer.specializations || [],
@@ -70,7 +70,7 @@ const TrainerView: React.FC = () => {
   useEffect(() => {
     const fetchTrainer = async () => {
       try {
-        const { data, error } = await supabase.from('staff').select('*').eq('id', id).single();
+        const { data, error } = await supabase.from('users').select('*').eq('id', id).single();
         if (error) {
           console.error('Error fetching trainer:', error);
           toast.error('Failed to load trainer details');
@@ -176,7 +176,7 @@ const TrainerView: React.FC = () => {
               >
                 <Button
                   variant="outline"
-                  onClick={() => navigate('/dashboard?tab=staff')}
+                  onClick={() => navigate('/trainers')}
                   className="group hover:border-[#00bc7d] hover:text-[#00bc7d] hover:bg-[#00bc7d]/5 rounded-xl border-gray-200"
                 >
                   <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
@@ -184,7 +184,7 @@ const TrainerView: React.FC = () => {
                 </Button>
                 {(hasRole(UserRole.ADMIN) || hasRole(UserRole.MANAGER)) && (
                   <Button
-                    onClick={() => navigate(`/staff/${trainer.id}/edit`)}
+                    onClick={() => navigate(`/trainers/${trainer.id}/edit`)}
                     className="bg-[#00bc7d] hover:bg-[#00bc7d]/90 text-white shadow-lg shadow-[#00bc7d]/20 rounded-xl"
                   >
                     <Edit className="h-4 w-4 mr-2" />

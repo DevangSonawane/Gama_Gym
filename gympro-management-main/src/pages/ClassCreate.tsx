@@ -440,16 +440,19 @@ const ClassCreate: React.FC = () => {
                     </CardHeader>
                     <CardContent className="p-6 space-y-6">
                       <div className="space-y-2">
-                        <Label htmlFor="price">Price per Session ($)</Label>
-                        <Input 
-                          id="price" 
-                          type="number" 
-                          min="0"
-                          step="0.01"
-                          value={formData.price}
-                          onChange={(e) => setFormData({...formData, price: e.target.value})}
-                          className="h-11 focus-visible:ring-[#00bc7d] rounded-xl border-gray-200"
-                        />
+                        <Label htmlFor="price">Price per Session (₹)</Label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium text-sm">₹</span>
+                          <Input
+                            id="price"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={formData.price}
+                            onChange={(e) => setFormData({...formData, price: e.target.value})}
+                            className="pl-7 h-11 focus-visible:ring-[#00bc7d] rounded-xl border-gray-200"
+                          />
+                        </div>
                       </div>
 
                       <div className="space-y-2">

@@ -9,7 +9,7 @@ import {
   TrendingUp,
   TrendingDown,
   Users,
-  DollarSign,
+  IndianRupee,
   Calendar,
   Award,
   Activity,
@@ -329,9 +329,9 @@ const AnalyticsDashboard: React.FC = () => {
         />
         <MetricCard
           title="Monthly Revenue"
-          value={`$${analyticsData.revenueStats.monthlyRevenue.toLocaleString()}`}
+          value={`₹${analyticsData.revenueStats.monthlyRevenue.toLocaleString()}`}
           change={`+${analyticsData.revenueStats.revenueGrowth}% from last month`}
-          icon={DollarSign}
+          icon={IndianRupee}
           trend="up"
           gradient="from-emerald-500 to-[#00bc7d]"
           delay={0.2}
@@ -462,7 +462,7 @@ const AnalyticsDashboard: React.FC = () => {
               <Card className="h-full border-gray-100 shadow-lg shadow-gray-100/50 overflow-hidden">
                 <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
                   <CardTitle className="flex items-center gap-2">
-                    <DollarSign className="h-5 w-5 text-[#00bc7d]" />
+                    <IndianRupee className="h-5 w-5 text-[#00bc7d]" />
                     Revenue Overview
                   </CardTitle>
                   <CardDescription>Financial performance metrics</CardDescription>
@@ -470,20 +470,20 @@ const AnalyticsDashboard: React.FC = () => {
                 <CardContent className="space-y-6 pt-6">
                   <div className="text-center p-6 rounded-2xl bg-gradient-to-br from-[#00bc7d] to-emerald-600 text-white shadow-lg shadow-[#00bc7d]/20">
                     <div className="text-4xl font-bold mb-1">
-                      ${analyticsData.revenueStats.totalRevenue.toLocaleString()}
+                      ₹{analyticsData.revenueStats.totalRevenue.toLocaleString()}
                     </div>
                     <p className="text-emerald-100 font-medium">Total Revenue</p>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="text-center p-4 rounded-xl bg-gray-50">
                       <div className="text-xl font-bold text-[#00bc7d] mb-1">
-                        ${analyticsData.revenueStats.monthlyRevenue.toLocaleString()}
+                        ₹{analyticsData.revenueStats.monthlyRevenue.toLocaleString()}
                       </div>
                       <p className="text-sm font-medium text-gray-600">This Month</p>
                     </div>
                     <div className="text-center p-4 rounded-xl bg-gray-50">
                       <div className="text-xl font-bold text-[#00bc7d] mb-1">
-                        ${analyticsData.revenueStats.outstandingPayments.toLocaleString()}
+                        ₹{analyticsData.revenueStats.outstandingPayments.toLocaleString()}
                       </div>
                       <p className="text-sm font-medium text-gray-600">Outstanding</p>
                     </div>
@@ -508,7 +508,7 @@ const AnalyticsDashboard: React.FC = () => {
                         <div className="w-2 h-2 rounded-full bg-[#00bc7d]" />
                         <span className="text-sm font-medium text-gray-700">{service}</span>
                       </div>
-                      <span className="text-sm font-bold text-gray-900">${revenue.toLocaleString()}</span>
+                      <span className="text-sm font-bold text-gray-900">₹{revenue.toLocaleString()}</span>
                     </div>
                   ))}
                 </CardContent>

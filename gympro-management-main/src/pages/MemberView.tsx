@@ -3,13 +3,16 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { Member, UserRole } from '@/types';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import Sidebar from '@/components/layout/Sidebar';
 import Topbar from '@/components/layout/Topbar';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import logoImg from '@/asset/gamalog.png';
 import {
   ArrowLeft,
   User,
@@ -22,7 +25,8 @@ import {
   Calendar,
   MapPin,
   Ruler,
-  Scale
+  Scale,
+  Receipt
 } from 'lucide-react';
 
 type DbMember = {
@@ -93,6 +97,134 @@ const MemberView: React.FC = () => {
     const saved = localStorage.getItem('sidebar-collapsed');
     return saved ? JSON.parse(saved) : false;
   });
+
+
+  const handleDownloadReceipt = async () => {
+    if (!member) return;
+
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+
+      // Margins
+      const margin = 20;
+
+      // Add background color
+      doc.setFillColor(248, 250, 252);
+      doc.rect(0, 0, pageWidth, pageHeight, 'F');
+
+      // Header background
+      doc.setFillColor(0, 188, 125);
+      doc.rect(0, 0, pageWidth, 90, 'F');
+
+      // Add logo
+      try {
+        const img = new Image();
+        img.src = logoImg;
+        await new Promise(resolve => {
+          img.onload = resolve;
+        });
+        doc.addImage(img, 'PNG', margin, 15, 60, 25);
+      } catch (error) {
+        console.error('Failed to load logo:', error);
+        doc.setFillColor(255, 255, 255);
+        doc.roundedRect(margin, 15, 60, 25, 5, 5, 'F');
+        doc.setTextColor(0, 188, 125);
+        doc.setFontSize(20);
+        doc.setFont('helvetica', 'bold');
+        doc.text('GAMA', margin + 15, 32);
+      }
+
+      // Receipt title
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(28);
+      doc.setFont('helvetica', 'bold');
+      doc.text('MEMBERSHIP RECEIPT', pageWidth / 2, 45, { align: 'center' });
+
+      // Receipt number and date
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(230, 255, 245);
+      const receiptNumber = `REC-${Date.now().toString().slice(-6)}`;
+      doc.text(`Receipt #: ${receiptNumber}`, margin, 70);
+      doc.text(`Date: ${new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}`, pageWidth - margin - 80, 70);
+
+      // White card for content
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(margin, 100, pageWidth - 2 * margin, pageHeight - 150, 10, 10, 'F');
+
+      // Member Info Header
+      doc.setTextColor(0, 188, 125);
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Member Information', margin + 15, 125);
+
+      // Member Details
+      doc.setTextColor(31, 41, 55);
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      let y = 140;
+      const details = [
+        ['Name', `${member.firstName} ${member.lastName}`],
+        ['Email', member.email],
+        ['Phone', member.phone || 'N/A'],
+        ['Date of Birth', member.dateOfBirth.toLocaleDateString('en-IN')]
+      ];
+      details.forEach(([label, value]) => {
+        doc.setFont('helvetica', 'bold');
+        doc.text(`${label}:`, margin + 15, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(value, margin + 80, y);
+        y += 16;
+      });
+
+      // Membership Table
+      const tableData = [
+        ['Membership Plan', member.membershipType],
+        ['Member Since', member.createdAt.toLocaleDateString('en-IN')],
+        ['Start Date', member.membershipStartDate.toLocaleDateString('en-IN')],
+        ['End Date', member.membershipEndDate.toLocaleDateString('en-IN')],
+        ['Status', member.isActive ? 'Active' : 'Inactive'],
+        ['Monthly Fee', `₹${(getMembershipPrice(member.membershipType) * 80).toLocaleString('en-IN')}`]
+      ];
+
+      autoTable(doc, {
+        body: tableData,
+        startY: y + 10,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [0, 188, 125],
+          textColor: 255,
+          fontSize: 12,
+          fontStyle: 'bold'
+        },
+        bodyStyles: { fontSize: 11 },
+        columnStyles: {
+          0: { fontStyle: 'bold', cellWidth: 80, fillColor: [240, 250, 245] },
+          1: { cellWidth: 'auto' }
+        },
+        margin: { left: margin + 15, right: margin + 15 }
+      });
+
+      // Footer
+      doc.setFillColor(0, 188, 125);
+      doc.rect(0, pageHeight - 40, pageWidth, 40, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Thank you for choosing GAMA Gym!', pageWidth / 2, pageHeight - 25, { align: 'center' });
+      doc.setTextColor(230, 255, 245);
+      doc.setFont('helvetica', 'normal');
+      doc.text('For any queries, contact us at support@gama.com', pageWidth / 2, pageHeight - 12, { align: 'center' });
+
+      doc.save(`${member.firstName}_${member.lastName}_Receipt.pdf`);
+      toast.success('Receipt downloaded successfully!');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Failed to download receipt');
+    }
+  };
 
   useEffect(() => {
     const fetchMember = async () => {
@@ -209,13 +341,22 @@ const MemberView: React.FC = () => {
                   Back
                 </Button>
                 {(hasRole(UserRole.ADMIN) || hasRole(UserRole.MANAGER) || hasRole(UserRole.STAFF)) && (
-                  <Button
-                    onClick={() => navigate(`/members/${member.id}/edit`)}
-                    className="bg-[#00bc7d] hover:bg-[#00bc7d]/90 text-white shadow-lg shadow-[#00bc7d]/20 rounded-xl"
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit Profile
-                  </Button>
+                  <>
+                    <Button
+                      onClick={handleDownloadReceipt}
+                      className="bg-gradient-to-r from-[#00bc7d] to-[#009664] hover:from-[#009664] hover:to-[#00bc7d] text-white shadow-lg shadow-[#00bc7d]/20 rounded-xl"
+                    >
+                      <Receipt className="h-4 w-4 mr-2" />
+                      Download Receipt
+                    </Button>
+                    <Button
+                      onClick={() => navigate(`/members/${member.id}/edit`)}
+                      className="bg-[#00bc7d] hover:bg-[#00bc7d]/90 text-white shadow-lg shadow-[#00bc7d]/20 rounded-xl"
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Profile
+                    </Button>
+                  </>
                 )}
               </motion.div>
             </div>
@@ -364,7 +505,7 @@ const MemberView: React.FC = () => {
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-600">Monthly Fee</span>
                           <span className="text-xl font-bold text-[#00bc7d]">
-                            ${getMembershipPrice(member.membershipType)}
+                            ₹{getMembershipPrice(member.membershipType)}
                           </span>
                         </div>
                         <div className="flex justify-between items-center pt-2 border-t border-[#00bc7d]/10">

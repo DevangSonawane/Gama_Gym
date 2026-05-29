@@ -4,12 +4,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { UserRole } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   Users,
   Calendar,
-  DollarSign,
+  IndianRupee,
   Activity,
   TrendingUp,
   Clock,
@@ -135,7 +134,7 @@ const Dashboard: React.FC = () => {
         title="Monthly Revenue"
         value={45231}
         change={15}
-        icon={DollarSign}
+        icon={IndianRupee}
         gradient="from-emerald-500 to-teal-500"
         delay={0.3}
       />
@@ -221,20 +220,6 @@ const Dashboard: React.FC = () => {
             </span>
           </div>
 
-          <div className="flex gap-3">
-            <Button variant="outline" className="h-10 rounded-xl border-gray-200 hover:border-[#00bc7d] hover:text-[#00bc7d] hover:bg-[#00bc7d]/5 transition-all">
-              <Users className="mr-2 h-4 w-4" />
-              Members
-            </Button>
-            <Button variant="outline" className="h-10 rounded-xl border-gray-200 hover:border-[#00bc7d] hover:text-[#00bc7d] hover:bg-[#00bc7d]/5 transition-all">
-              <Calendar className="mr-2 h-4 w-4" />
-              Schedule
-            </Button>
-            <Button className="h-10 rounded-xl bg-[#00bc7d] hover:bg-[#00bc7d]/90 text-white shadow-lg shadow-[#00bc7d]/20 transition-all">
-              <DollarSign className="mr-2 h-4 w-4" />
-              Revenue
-            </Button>
-          </div>
         </div>
       </div>
     </div>

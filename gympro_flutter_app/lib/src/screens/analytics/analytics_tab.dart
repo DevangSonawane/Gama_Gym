@@ -402,13 +402,15 @@ class _AnalyticsTabState extends State<AnalyticsTab> {
               builder: (context, constraints) {
                 final w = constraints.maxWidth;
                 final cross = w >= 980 ? 4 : (w >= 640 ? 2 : 1);
+                // Match Members Management stat cards sizing.
+                final aspect = w >= 980 ? 1.5 : 1.7;
                 return GridView.count(
                   crossAxisCount: cross,
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   mainAxisSpacing: 12,
                   crossAxisSpacing: 12,
-                  childAspectRatio: w >= 980 ? 1.6 : 1.75,
+                  childAspectRatio: aspect,
                   children: [
                     _AnalyticsStatTile(
                       title: 'Total Members',

@@ -6,12 +6,12 @@ import {
   Users,
   Calendar,
   UserCheck,
-  CreditCard,
   BarChart3,
   LogOut,
   Settings,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Dumbbell
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { UserRole } from '@/types';
@@ -63,7 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed: externalCollapsed, onTog
     { id: 'members', label: 'Members', icon: Users, path: '/dashboard', roles: [UserRole.STAFF, UserRole.MANAGER, UserRole.ADMIN] },
     { id: 'classes', label: 'Classes', icon: Calendar, path: '/dashboard' },
     { id: 'staff', label: 'Staff', icon: UserCheck, path: '/dashboard', roles: [UserRole.MANAGER, UserRole.ADMIN] },
-    { id: 'payments', label: 'Payments', icon: CreditCard, path: '/dashboard', roles: [UserRole.STAFF, UserRole.MANAGER, UserRole.ADMIN] },
+    { id: 'trainers', label: 'Trainers', icon: Dumbbell, path: '/trainers', roles: [UserRole.MANAGER, UserRole.ADMIN] },
     { id: 'analytics', label: 'Analytics', icon: BarChart3, path: '/dashboard', roles: [UserRole.MANAGER, UserRole.ADMIN] },
     { id: 'users', label: 'Users', icon: Users, path: '/users', roles: [UserRole.ADMIN] },
   ];
@@ -78,7 +78,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed: externalCollapsed, onTog
   };
 
   const handleNavigation = (item: NavItem) => {
-    if (item.id === 'users') {
+    if (item.id === 'users' || item.id === 'trainers') {
       navigate(item.path);
     } else {
       navigate(`${item.path}?tab=${item.id}`);
@@ -88,6 +88,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed: externalCollapsed, onTog
   const isActive = (item: NavItem) => {
     if (item.id === 'users') {
       return location.pathname === '/users';
+    }
+    
+    if (item.id === 'trainers') {
+      return location.pathname === '/trainers' || location.pathname === '/trainers/new';
     }
 
     if (item.id === 'members' && location.pathname.startsWith('/members/')) {

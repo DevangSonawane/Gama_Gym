@@ -9,7 +9,9 @@ import {
   Phone,
   Shield,
   Lock,
-  Sparkles
+  Sparkles,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,9 +31,8 @@ const UserCreate: React.FC = () => {
     const saved = localStorage.getItem('sidebar-collapsed');
     return saved ? JSON.parse(saved) : false;
   });
-
-  const roleOptions = ['admin', 'manager', 'trainer', 'member'] as const;
-  type RoleOption = typeof roleOptions[number];
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -40,7 +41,7 @@ const UserCreate: React.FC = () => {
     phoneNumber: '',
     password: '',
     confirmPassword: '',
-    role: 'member' as RoleOption,
+    role: 'admin',
     isActive: true
   });
 
@@ -224,28 +225,6 @@ const UserCreate: React.FC = () => {
                     </CardHeader>
                     <CardContent className="p-6 space-y-6 relative">
                       <div className="space-y-2">
-                        <Label htmlFor="role">Role *</Label>
-                        <Select
-                          value={formData.role}
-                          onValueChange={(value) => {
-                            if ((roleOptions as readonly string[]).includes(value)) {
-                              setFormData({ ...formData, role: value as RoleOption });
-                            }
-                          }}
-                        >
-                          <SelectTrigger className="focus:ring-[#00bc7d]/20 rounded-xl border-gray-200 h-11">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="admin">Admin</SelectItem>
-                            <SelectItem value="manager">Manager</SelectItem>
-                            <SelectItem value="trainer">Trainer</SelectItem>
-                            <SelectItem value="member">Member</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-2">
                         <Label htmlFor="status">Status</Label>
                         <Select
                           value={formData.isActive ? 'active' : 'inactive'}
@@ -278,13 +257,20 @@ const UserCreate: React.FC = () => {
                             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <Input
                               id="password"
-                              type="password"
+                              type={showPassword ? 'text' : 'password'}
                               value={formData.password}
                               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                               required
                               minLength={6}
-                              className="pl-9 focus-visible:ring-[#00bc7d] rounded-xl border-gray-200"
+                              className="pl-9 pr-10 focus-visible:ring-[#00bc7d] rounded-xl border-gray-200"
                             />
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                            >
+                              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                            </button>
                           </div>
                         </div>
                         <div className="space-y-2">
@@ -293,13 +279,20 @@ const UserCreate: React.FC = () => {
                             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <Input
                               id="confirmPassword"
-                              type="password"
+                              type={showConfirmPassword ? 'text' : 'password'}
                               value={formData.confirmPassword}
                               onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                               required
                               minLength={6}
-                              className="pl-9 focus-visible:ring-[#00bc7d] rounded-xl border-gray-200"
+                              className="pl-9 pr-10 focus-visible:ring-[#00bc7d] rounded-xl border-gray-200"
                             />
+                            <button
+                              type="button"
+                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                            >
+                              {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                            </button>
                           </div>
                         </div>
                       </div>

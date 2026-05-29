@@ -32,6 +32,8 @@ class _UserFormScreenState extends State<UserFormScreen> {
   String _role = 'member';
   bool _isActive = true;
   bool _loading = false;
+  bool _showPassword = false;
+  bool _showConfirmPassword = false;
   String? _error;
 
   @override
@@ -297,52 +299,94 @@ class _UserFormScreenState extends State<UserFormScreen> {
                                     setState(() => _role = v ?? 'member'),
                               ),
                               const SizedBox(height: 12),
-                              DropdownButtonFormField<String>(
-                                initialValue: _isActive ? 'active' : 'inactive',
-                                decoration: const InputDecoration(
-                                  labelText: 'Status',
-                                  border: OutlineInputBorder(),
+                              SwitchListTile(
+                                contentPadding: EdgeInsets.zero,
+                                title: const Text(
+                                  'Status',
+                                  style: TextStyle(fontWeight: FontWeight.w900),
                                 ),
-                                items: const [
-                                  DropdownMenuItem(
-                                    value: 'active',
-                                    child: Text('Active'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'inactive',
-                                    child: Text('Inactive'),
-                                  ),
-                                ],
-                                onChanged: (v) => setState(
-                                  () => _isActive = (v ?? 'active') == 'active',
+                                subtitle: Text(
+                                  _isActive ? 'Active' : 'Inactive',
                                 ),
+                                value: _isActive,
+                                onChanged: (v) => setState(() => _isActive = v),
                               ),
-                              const SizedBox(height: 14),
+                              const SizedBox(height: 12),
                               TextFormField(
                                 controller: _password,
-                                obscureText: true,
+                                obscureText: !_showPassword,
                                 decoration: InputDecoration(
                                   labelText: widget.userId == null
                                       ? 'Password *'
                                       : 'New password (optional)',
                                   prefixIcon: const Icon(Icons.lock_outline),
                                   border: const OutlineInputBorder(),
+                                  suffixIcon: IconButton(
+                                    tooltip: _showPassword
+                                        ? 'Hide password'
+                                        : 'Show password',
+                                    onPressed: () => setState(
+                                      () => _showPassword = !_showPassword,
+                                    ),
+                                    icon: Icon(
+                                      _showPassword
+                                          ? Icons.visibility_off_outlined
+                                          : Icons.visibility_outlined,
+                                    ),
+                                  ),
                                 ),
+                                enableSuggestions: false,
+                                autocorrect: false,
+                                validator: (v) {
+                                  if (widget.userId != null) return null;
+                                  if (v == null || v.trim().isEmpty) {
+                                    return 'Required';
+                                  }
+                                  return null;
+                                },
                               ),
                               const SizedBox(height: 12),
                               TextFormField(
                                 controller: _confirm,
-                                obscureText: true,
-                                decoration: const InputDecoration(
+                                obscureText: !_showConfirmPassword,
+                                decoration: InputDecoration(
                                   labelText: 'Confirm Password',
                                   prefixIcon: Icon(Icons.lock_outline),
-                                  border: OutlineInputBorder(),
+                                  border: const OutlineInputBorder(),
+                                  suffixIcon: IconButton(
+                                    tooltip: _showConfirmPassword
+                                        ? 'Hide password'
+                                        : 'Show password',
+                                    onPressed: () => setState(
+                                      () => _showConfirmPassword =
+                                          !_showConfirmPassword,
+                                    ),
+                                    icon: Icon(
+                                      _showConfirmPassword
+                                          ? Icons.visibility_off_outlined
+                                          : Icons.visibility_outlined,
+                                    ),
+                                  ),
                                 ),
+                                enableSuggestions: false,
+                                autocorrect: false,
+                                validator: (v) {
+                                  if (widget.userId != null &&
+                                      _password.text.trim().isEmpty) {
+                                    return null;
+                                  }
+                                  if (v == null || v.trim().isEmpty) {
+                                    return widget.userId == null
+                                        ? 'Required'
+                                        : null;
+                                  }
+                                  return null;
+                                },
                               ),
                               const SizedBox(height: 16),
                               SizedBox(
                                 width: double.infinity,
-                                child: FilledButton.icon(
+                                child: FilledButton(
                                   style: FilledButton.styleFrom(
                                     backgroundColor: AppTokens.brand,
                                     padding: const EdgeInsets.symmetric(
@@ -353,7 +397,7 @@ class _UserFormScreenState extends State<UserFormScreen> {
                                     ),
                                   ),
                                   onPressed: _loading ? null : _submit,
-                                  icon: _loading
+                                  child: _loading
                                       ? const SizedBox(
                                           height: 18,
                                           width: 18,
@@ -362,15 +406,14 @@ class _UserFormScreenState extends State<UserFormScreen> {
                                             color: Colors.white,
                                           ),
                                         )
-                                      : const Icon(Icons.save_outlined),
-                                  label: Text(
-                                    widget.userId == null
-                                        ? 'Create User'
-                                        : 'Save Changes',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
+                                      : Text(
+                                          widget.userId == null
+                                              ? 'Create User'
+                                              : 'Save Changes',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w900,
+                                          ),
+                                        ),
                                 ),
                               ),
                             ],
