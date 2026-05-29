@@ -15,6 +15,8 @@ class Member {
     this.emergencyContactName,
     this.emergencyContactPhone,
     this.emergencyContactRelationship,
+    this.createdAt,
+    this.updatedAt,
   });
 
   final String id;
@@ -32,6 +34,8 @@ class Member {
   final String? emergencyContactName;
   final String? emergencyContactPhone;
   final String? emergencyContactRelationship;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   String get fullName => '$firstName $lastName'.trim();
 
@@ -65,6 +69,8 @@ class Member {
       emergencyContactPhone: row['emergency_contact_phone'] as String?,
       emergencyContactRelationship:
           row['emergency_contact_relationship'] as String?,
+      createdAt: DateTime.tryParse((row['created_at'] as String?) ?? ''),
+      updatedAt: DateTime.tryParse((row['updated_at'] as String?) ?? ''),
     );
   }
 }

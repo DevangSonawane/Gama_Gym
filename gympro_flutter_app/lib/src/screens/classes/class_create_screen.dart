@@ -265,6 +265,7 @@ class _ClassCreateScreenState extends State<ClassCreateScreen> {
                               const SizedBox(height: 12),
                               DropdownButtonFormField<String>(
                                 initialValue: _category,
+                                isExpanded: true,
                                 decoration: const InputDecoration(
                                   labelText: 'Category',
                                   border: OutlineInputBorder(),
@@ -275,6 +276,8 @@ class _ClassCreateScreenState extends State<ClassCreateScreen> {
                                       value: c,
                                       child: Text(
                                         c.isEmpty ? 'Select Category' : c,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                 ],
@@ -284,6 +287,7 @@ class _ClassCreateScreenState extends State<ClassCreateScreen> {
                               const SizedBox(height: 12),
                               DropdownButtonFormField<String>(
                                 initialValue: _difficulty,
+                                isExpanded: true,
                                 decoration: const InputDecoration(
                                   labelText: 'Difficulty Level',
                                   border: OutlineInputBorder(),
@@ -291,15 +295,27 @@ class _ClassCreateScreenState extends State<ClassCreateScreen> {
                                 items: const [
                                   DropdownMenuItem(
                                     value: 'Beginner',
-                                    child: Text('Beginner'),
+                                    child: Text(
+                                      'Beginner',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
                                   DropdownMenuItem(
                                     value: 'Intermediate',
-                                    child: Text('Intermediate'),
+                                    child: Text(
+                                      'Intermediate',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
                                   DropdownMenuItem(
                                     value: 'Advanced',
-                                    child: Text('Advanced'),
+                                    child: Text(
+                                      'Advanced',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
                                 ],
                                 onChanged: (v) => setState(
@@ -331,19 +347,60 @@ class _ClassCreateScreenState extends State<ClassCreateScreen> {
                             children: [
                               DropdownButtonFormField<String>(
                                 initialValue: _instructorId,
+                                isExpanded: true,
                                 decoration: const InputDecoration(
                                   labelText: 'Trainer',
                                   border: OutlineInputBorder(),
                                 ),
+                                selectedItemBuilder: (context) {
+                                  final items = <String>[
+                                    '',
+                                    ..._trainers.map((t) => t.id),
+                                  ];
+                                  return items
+                                      .map(
+                                        (id) => Align(
+                                          alignment: Alignment.centerLeft,
+                                          child: Text(
+                                            id.isEmpty
+                                                ? 'Select Trainer'
+                                                : () {
+                                                    StaffMember? match;
+                                                    for (final t in _trainers) {
+                                                      if (t.id == id) {
+                                                        match = t;
+                                                        break;
+                                                      }
+                                                    }
+                                                    if (match == null) {
+                                                      return 'Unknown trainer';
+                                                    }
+                                                    return _trainerLabel(match);
+                                                  }(),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      )
+                                      .toList();
+                                },
                                 items: [
                                   const DropdownMenuItem(
                                     value: '',
-                                    child: Text('Select Trainer'),
+                                    child: Text(
+                                      'Select Trainer',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
                                   for (final t in _trainers)
                                     DropdownMenuItem(
                                       value: t.id,
-                                      child: Text(_trainerLabel(t)),
+                                      child: Text(
+                                        _trainerLabel(t),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
                                 ],
                                 onChanged: (v) =>
@@ -434,6 +491,7 @@ class _ClassCreateScreenState extends State<ClassCreateScreen> {
                                   Expanded(
                                     child: DropdownButtonFormField<String>(
                                       initialValue: _durationMinutes,
+                                      isExpanded: true,
                                       decoration: const InputDecoration(
                                         labelText: 'Duration (minutes)',
                                         border: OutlineInputBorder(),
@@ -441,23 +499,43 @@ class _ClassCreateScreenState extends State<ClassCreateScreen> {
                                       items: const [
                                         DropdownMenuItem(
                                           value: '30',
-                                          child: Text('30 minutes'),
+                                          child: Text(
+                                            '30 minutes',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ),
                                         DropdownMenuItem(
                                           value: '45',
-                                          child: Text('45 minutes'),
+                                          child: Text(
+                                            '45 minutes',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ),
                                         DropdownMenuItem(
                                           value: '60',
-                                          child: Text('60 minutes'),
+                                          child: Text(
+                                            '60 minutes',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ),
                                         DropdownMenuItem(
                                           value: '90',
-                                          child: Text('90 minutes'),
+                                          child: Text(
+                                            '90 minutes',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ),
                                         DropdownMenuItem(
                                           value: '120',
-                                          child: Text('120 minutes'),
+                                          child: Text(
+                                            '120 minutes',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ),
                                       ],
                                       onChanged: (v) => setState(

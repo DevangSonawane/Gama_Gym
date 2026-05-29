@@ -70,6 +70,22 @@ class _UserListScreenState extends State<UserListScreen> {
     }
   }
 
+  String _displayRole(String role) {
+    switch (role.toLowerCase()) {
+      case 'admin':
+        return 'Admin';
+      case 'manager':
+        return 'Manager';
+      case 'trainer':
+        return 'Trainer';
+      case 'member':
+        return 'Member';
+      default:
+        if (role.trim().isEmpty) return 'Member';
+        return role[0].toUpperCase() + role.substring(1);
+    }
+  }
+
   Widget _pill({
     required BuildContext context,
     required String text,
@@ -86,7 +102,9 @@ class _UserListScreenState extends State<UserListScreen> {
       ),
       child: Text(
         text,
-        style: TextStyle(fontWeight: FontWeight.w700, color: fg, fontSize: 12),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(fontWeight: FontWeight.w800, color: fg, fontSize: 12),
       ),
     );
   }
@@ -156,14 +174,34 @@ class _UserListScreenState extends State<UserListScreen> {
         ? rows
         : rows.where((u) => u.role.toLowerCase() == _roleFilter).toList();
 
-    final stats = <String, int>{
-      'Total Users': _users.length,
-      'Active': _users.where((u) => u.isActive).length,
-      'Admins': _users.where((u) => u.role.toLowerCase() == 'admin').length,
-      'Managers': _users.where((u) => u.role.toLowerCase() == 'manager').length,
-      'Trainers': _users.where((u) => u.role.toLowerCase() == 'trainer').length,
-      'Members': _users.where((u) => u.role.toLowerCase() == 'member').length,
-    };
+    final statCards = <({String label, int value, Color color})>[
+      (label: 'Total Users', value: _users.length, color: AppTokens.brand),
+      (
+        label: 'Active',
+        value: _users.where((u) => u.isActive).length,
+        color: const Color(0xFF2563EB),
+      ),
+      (
+        label: 'Admins',
+        value: _users.where((u) => u.role.toLowerCase() == 'admin').length,
+        color: const Color(0xFF6D28D9),
+      ),
+      (
+        label: 'Managers',
+        value: _users.where((u) => u.role.toLowerCase() == 'manager').length,
+        color: const Color(0xFF4F46E5),
+      ),
+      (
+        label: 'Trainers',
+        value: _users.where((u) => u.role.toLowerCase() == 'trainer').length,
+        color: const Color(0xFF0891B2),
+      ),
+      (
+        label: 'Members',
+        value: _users.where((u) => u.role.toLowerCase() == 'member').length,
+        color: const Color(0xFF6B7280),
+      ),
+    ];
 
     return Scaffold(
       backgroundColor: AppTokens.pageBg,
@@ -220,7 +258,7 @@ class _UserListScreenState extends State<UserListScreen> {
                     crossAxisSpacing: 12,
                     childAspectRatio: w >= 980 ? 1.45 : 1.7,
                     children: [
-                      for (final entry in stats.entries)
+                      for (final entry in statCards)
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
@@ -239,31 +277,32 @@ class _UserListScreenState extends State<UserListScreen> {
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.start,
                             children: [
                               Text(
-                                entry.key,
+                                entry.label,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   color: Theme.of(
                                     context,
                                   ).colorScheme.onSurfaceVariant,
                                   fontWeight: FontWeight.w700,
+                                  fontSize: 13,
                                 ),
                               ),
-                              const SizedBox(height: 8),
-                              Text(
-                                '${entry.value}',
-                                style: TextStyle(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.w900,
-                                  color: entry.key == 'Total Users'
-                                      ? AppTokens.brand
-                                      : _roleAccent(
-                                          entry.key
-                                              .replaceAll('Total Users', '')
-                                              .trim()
-                                              .toLowerCase(),
-                                        ),
+                              const SizedBox(height: 6),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  '${entry.value}',
+                                  style: TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w900,
+                                    height: 1.1,
+                                    color: entry.color,
+                                  ),
                                 ),
                               ),
                             ],
@@ -372,7 +411,7 @@ class _UserListScreenState extends State<UserListScreen> {
                                 roleAccent: _roleAccent(u.role),
                                 rolePill: _pill(
                                   context: context,
-                                  text: u.role,
+                                  text: _displayRole(u.role),
                                   fg: _roleAccent(u.role),
                                   bg: _roleAccent(
                                     u.role,
@@ -445,128 +484,207 @@ class _UserDirectoryRow extends StatelessWidget {
       if (user.lastName.isNotEmpty) user.lastName[0],
     ].join().toUpperCase();
 
-    return InkWell(
-      onTap: onView,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        child: Row(
-          children: [
-            Container(
-              height: 42,
-              width: 42,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppTokens.brand, AppTokens.brandDark],
-                ),
-                borderRadius: BorderRadius.circular(999),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTokens.brand.withValues(alpha: 0.20),
-                    blurRadius: 18,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                initials.isEmpty ? '?' : initials,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    user.fullName.isEmpty ? user.email : user.fullName,
-                    style: const TextStyle(fontWeight: FontWeight.w900),
-                  ),
-                  const SizedBox(height: 4),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 4,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.mail_outline, size: 16, color: muted),
-                          const SizedBox(width: 6),
-                          Text(
-                            user.email,
-                            style: TextStyle(
-                              color: muted,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                      if ((user.phoneNumber ?? '').trim().isNotEmpty)
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.phone_outlined, size: 16, color: muted),
-                            const SizedBox(width: 6),
-                            Text(
-                              user.phoneNumber!,
-                              style: TextStyle(
-                                color: muted,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [rolePill, const SizedBox(height: 8), statusPill],
-            ),
-            const SizedBox(width: 8),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  tooltip: 'View',
-                  onPressed: onView,
-                  icon: const Icon(Icons.visibility_outlined),
-                ),
-                IconButton(
-                  tooltip: 'Edit',
-                  onPressed: onEdit,
-                  icon: const Icon(Icons.edit_outlined),
-                ),
-                PopupMenuButton<String>(
-                  tooltip: 'More',
-                  onSelected: (v) {
-                    if (v == 'delete') onDelete();
-                  },
-                  itemBuilder: (context) => const [
-                    PopupMenuItem(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          Icon(Icons.delete_outline, color: Colors.red),
-                          SizedBox(width: 8),
-                          Text('Delete User'),
-                        ],
-                      ),
-                    ),
-                  ],
-                  icon: const Icon(Icons.more_vert),
-                ),
-              ],
+    Widget avatar() {
+      return Container(
+        height: 42,
+        width: 42,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [AppTokens.brand, AppTokens.brandDark],
+          ),
+          borderRadius: BorderRadius.circular(999),
+          boxShadow: [
+            BoxShadow(
+              color: AppTokens.brand.withValues(alpha: 0.20),
+              blurRadius: 18,
+              offset: const Offset(0, 10),
             ),
           ],
         ),
-      ),
+        alignment: Alignment.center,
+        child: Text(
+          initials.isEmpty ? '?' : initials,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      );
+    }
+
+    Widget moreMenu({bool includeViewEdit = true}) {
+      return PopupMenuButton<String>(
+        tooltip: 'More',
+        onSelected: (v) {
+          switch (v) {
+            case 'view':
+              onView();
+              break;
+            case 'edit':
+              onEdit();
+              break;
+            case 'delete':
+              onDelete();
+              break;
+          }
+        },
+        itemBuilder: (context) => [
+          if (includeViewEdit)
+            const PopupMenuItem(
+              value: 'view',
+              child: Row(
+                children: [
+                  Icon(Icons.visibility_outlined),
+                  SizedBox(width: 8),
+                  Text('View'),
+                ],
+              ),
+            ),
+          if (includeViewEdit)
+            const PopupMenuItem(
+              value: 'edit',
+              child: Row(
+                children: [
+                  Icon(Icons.edit_outlined),
+                  SizedBox(width: 8),
+                  Text('Edit'),
+                ],
+              ),
+            ),
+          const PopupMenuItem(
+            value: 'delete',
+            child: Row(
+              children: [
+                Icon(Icons.delete_outline, color: Colors.red),
+                SizedBox(width: 8),
+                Text('Delete User'),
+              ],
+            ),
+          ),
+        ],
+        icon: const Icon(Icons.more_vert),
+      );
+    }
+
+    Widget contactLine(IconData icon, String text) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: muted),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: muted, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final narrow = constraints.maxWidth < 420;
+
+        return InkWell(
+          onTap: onView,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            child: Row(
+              children: [
+                avatar(),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              user.fullName.isEmpty
+                                  ? user.email
+                                  : user.fullName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                          if (narrow) moreMenu(includeViewEdit: true),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 4,
+                        children: [
+                          SizedBox(
+                            width: narrow
+                                ? (constraints.maxWidth - 80).clamp(120, 240)
+                                : null,
+                            child: contactLine(Icons.mail_outline, user.email),
+                          ),
+                          if ((user.phoneNumber ?? '').trim().isNotEmpty)
+                            SizedBox(
+                              width: narrow
+                                  ? (constraints.maxWidth - 80).clamp(120, 240)
+                                  : null,
+                              child: contactLine(
+                                Icons.phone_outlined,
+                                user.phoneNumber!,
+                              ),
+                            ),
+                          if (narrow) ...[rolePill, statusPill],
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                if (!narrow) ...[
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [rolePill, const SizedBox(height: 8), statusPill],
+                  ),
+                  const SizedBox(width: 8),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        tooltip: 'View',
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 34,
+                          minHeight: 34,
+                        ),
+                        onPressed: onView,
+                        icon: const Icon(Icons.visibility_outlined),
+                      ),
+                      IconButton(
+                        tooltip: 'Edit',
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 34,
+                          minHeight: 34,
+                        ),
+                        onPressed: onEdit,
+                        icon: const Icon(Icons.edit_outlined),
+                      ),
+                      moreMenu(includeViewEdit: false),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

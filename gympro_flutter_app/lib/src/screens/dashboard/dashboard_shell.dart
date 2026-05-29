@@ -154,10 +154,16 @@ class DashboardShell extends StatelessWidget {
         return Scaffold(
           backgroundColor: AppTokens.pageBg,
           appBar: AppBar(
-            title: Image.asset(
-              'assets/images/gamalog.png',
-              height: 90,
-              fit: BoxFit.contain,
+            centerTitle: false,
+            titleSpacing: 0,
+            title: Align(
+              alignment: Alignment.centerLeft,
+              child: Image.asset(
+                'assets/images/gamalog.png',
+                height: 90,
+                fit: BoxFit.contain,
+                alignment: Alignment.centerLeft,
+              ),
             ),
             actions: [
               IconButton(
