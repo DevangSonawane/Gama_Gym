@@ -212,20 +212,11 @@ class _UserListScreenState extends State<UserListScreen> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: ReactPageHeader(
-                      title: 'User Management',
-                      subtitle: 'Manage system users and their roles',
-                      backLabel: 'Back to Dashboard',
-                      onBack: () => context.go('/dashboard?tab=overview'),
-                      icon: Icons.auto_awesome,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  FilledButton.icon(
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final narrow = constraints.maxWidth < 420;
+
+                  final create = FilledButton.icon(
                     style: FilledButton.styleFrom(
                       backgroundColor: AppTokens.brand,
                       padding: const EdgeInsets.symmetric(
@@ -242,8 +233,58 @@ class _UserListScreenState extends State<UserListScreen> {
                       'Create New User',
                       style: TextStyle(fontWeight: FontWeight.w800),
                     ),
-                  ),
-                ],
+                  );
+
+                  final header = ReactPageHeader(
+                    title: 'User Management',
+                    subtitle: 'Manage system users and their roles',
+                    backLabel: '',
+                    onBack: () => context.go('/dashboard?tab=overview'),
+                    icon: Icons.auto_awesome,
+                  );
+
+                  if (!narrow) {
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: header),
+                        const SizedBox(width: 12),
+                        create,
+                      ],
+                    );
+                  }
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: header),
+                          const SizedBox(width: 12),
+                          SizedBox(
+                            height: 44,
+                            child: FilledButton(
+                              style: FilledButton.styleFrom(
+                                backgroundColor: AppTokens.brand,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
+                              ),
+                              onPressed: () => context.go('/users/new'),
+                              child: const Icon(Icons.person_add_alt_1),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      create,
+                    ],
+                  );
+                },
               ),
               const SizedBox(height: 16),
               LayoutBuilder(

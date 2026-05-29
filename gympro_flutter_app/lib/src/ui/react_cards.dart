@@ -21,19 +21,36 @@ class ReactPageHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    final showBackLabel = backLabel.trim().isNotEmpty;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        OutlinedButton.icon(
-          style: OutlinedButton.styleFrom(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            side: BorderSide(color: Colors.black.withValues(alpha: 0.10)),
-            foregroundColor: Colors.black87,
-          ),
-          onPressed: onBack,
-          icon: const Icon(Icons.arrow_back, size: 18),
-          label: Text(backLabel),
-        ),
+        showBackLabel
+            ? OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  side: BorderSide(color: Colors.black.withValues(alpha: 0.10)),
+                  foregroundColor: Colors.black87,
+                ),
+                onPressed: onBack,
+                icon: const Icon(Icons.arrow_back, size: 18),
+                label: Text(backLabel),
+              )
+            : OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  side: BorderSide(color: Colors.black.withValues(alpha: 0.10)),
+                  foregroundColor: Colors.black87,
+                  minimumSize: const Size(44, 44),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                ),
+                onPressed: onBack,
+                child: const Icon(Icons.arrow_back, size: 18),
+              ),
         const SizedBox(height: 12),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,14 +78,17 @@ class ReactPageHeader extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: Theme.of(context)
-                        .textTheme
-                        .headlineSmall
-                        ?.copyWith(fontWeight: FontWeight.w900),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     subtitle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(color: muted, fontWeight: FontWeight.w600),
                   ),
                 ],
@@ -177,10 +197,7 @@ class ReactCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           header,
-          Padding(
-            padding: padding,
-            child: child,
-          ),
+          Padding(padding: padding, child: child),
         ],
       ),
     );
@@ -258,13 +275,9 @@ class GradientReactCard extends StatelessWidget {
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: child,
-          ),
+          Padding(padding: const EdgeInsets.all(16), child: child),
         ],
       ),
     );
   }
 }
-

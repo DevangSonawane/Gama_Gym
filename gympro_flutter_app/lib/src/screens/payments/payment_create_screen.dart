@@ -59,7 +59,9 @@ class _PaymentCreateScreenState extends State<PaymentCreateScreen> {
       }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Payment processed and invoice generated')),
+        const SnackBar(
+          content: Text('Payment processed and invoice generated'),
+        ),
       );
       context.go('/dashboard?tab=payments');
     } catch (e) {
@@ -144,8 +146,9 @@ class _PaymentCreateScreenState extends State<PaymentCreateScreen> {
                             labelText: 'Member ID *',
                             border: OutlineInputBorder(),
                           ),
-                          validator: (v) =>
-                              (v == null || v.trim().isEmpty) ? 'Required' : null,
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Required'
+                              : null,
                         ),
                         const SizedBox(height: 12),
                         Row(
@@ -153,6 +156,7 @@ class _PaymentCreateScreenState extends State<PaymentCreateScreen> {
                             Expanded(
                               child: DropdownButtonFormField<String>(
                                 initialValue: _type,
+                                isExpanded: true,
                                 decoration: const InputDecoration(
                                   labelText: 'Type',
                                   border: OutlineInputBorder(),
@@ -160,15 +164,27 @@ class _PaymentCreateScreenState extends State<PaymentCreateScreen> {
                                 items: const [
                                   DropdownMenuItem(
                                     value: 'MEMBERSHIP',
-                                    child: Text('MEMBERSHIP'),
+                                    child: Text(
+                                      'MEMBERSHIP',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
                                   DropdownMenuItem(
                                     value: 'CLASS',
-                                    child: Text('CLASS'),
+                                    child: Text(
+                                      'CLASS',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
                                   DropdownMenuItem(
                                     value: 'OTHER',
-                                    child: Text('OTHER'),
+                                    child: Text(
+                                      'OTHER',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
                                 ],
                                 onChanged: (v) =>
@@ -179,6 +195,7 @@ class _PaymentCreateScreenState extends State<PaymentCreateScreen> {
                             Expanded(
                               child: DropdownButtonFormField<String>(
                                 initialValue: _method,
+                                isExpanded: true,
                                 decoration: const InputDecoration(
                                   labelText: 'Method',
                                   border: OutlineInputBorder(),
@@ -186,19 +203,35 @@ class _PaymentCreateScreenState extends State<PaymentCreateScreen> {
                                 items: const [
                                   DropdownMenuItem(
                                     value: 'STRIPE',
-                                    child: Text('STRIPE'),
+                                    child: Text(
+                                      'STRIPE',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
                                   DropdownMenuItem(
                                     value: 'PAYPAL',
-                                    child: Text('PAYPAL'),
+                                    child: Text(
+                                      'PAYPAL',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
                                   DropdownMenuItem(
                                     value: 'CASH',
-                                    child: Text('CASH'),
+                                    child: Text(
+                                      'CASH',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
                                   DropdownMenuItem(
                                     value: 'BANK_TRANSFER',
-                                    child: Text('BANK_TRANSFER'),
+                                    child: Text(
+                                      'BANK_TRANSFER',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
                                 ],
                                 onChanged: (v) =>
@@ -214,8 +247,9 @@ class _PaymentCreateScreenState extends State<PaymentCreateScreen> {
                             labelText: 'Description *',
                             border: OutlineInputBorder(),
                           ),
-                          validator: (v) =>
-                              (v == null || v.trim().isEmpty) ? 'Required' : null,
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Required'
+                              : null,
                         ),
                       ],
                     ),
@@ -282,9 +316,9 @@ class _PaymentCreateScreenState extends State<PaymentCreateScreen> {
                                 'Enter a valid promo code to apply discount automatically.',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -332,8 +366,8 @@ class _PaymentCreateScreenState extends State<PaymentCreateScreen> {
                             filled: true,
                             fillColor: const Color(0xFFF3F4F6),
                           ),
-                          validator: (v) => (v == null ||
-                                  double.tryParse(v.trim()) == null)
+                          validator: (v) =>
+                              (v == null || double.tryParse(v.trim()) == null)
                               ? 'Enter a number'
                               : null,
                           onChanged: (_) => setState(() {}),
@@ -353,8 +387,7 @@ class _PaymentCreateScreenState extends State<PaymentCreateScreen> {
                             children: [
                               _AmountRow(
                                 label: 'Subtotal',
-                                value:
-                                    'INR ${_amountValue.toStringAsFixed(2)}',
+                                value: 'INR ${_amountValue.toStringAsFixed(2)}',
                               ),
                               const SizedBox(height: 6),
                               const _AmountRow(
@@ -369,8 +402,7 @@ class _PaymentCreateScreenState extends State<PaymentCreateScreen> {
                               const SizedBox(height: 10),
                               _AmountRow(
                                 label: 'Total',
-                                value:
-                                    'INR ${_amountValue.toStringAsFixed(2)}',
+                                value: 'INR ${_amountValue.toStringAsFixed(2)}',
                                 isTotal: true,
                               ),
                             ],
@@ -399,7 +431,9 @@ class _PaymentCreateScreenState extends State<PaymentCreateScreen> {
                                   )
                                 : const Text(
                                     'Process Payment',
-                                    style: TextStyle(fontWeight: FontWeight.w900),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                    ),
                                   ),
                           ),
                         ),
@@ -465,10 +499,7 @@ class _AmountRow extends StatelessWidget {
       children: [
         Text(
           label,
-          style: TextStyle(
-            color: muted,
-            fontWeight: FontWeight.w700,
-          ),
+          style: TextStyle(color: muted, fontWeight: FontWeight.w700),
         ),
         Text(
           value,
