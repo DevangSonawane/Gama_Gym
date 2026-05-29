@@ -154,10 +154,7 @@ class _UserFormScreenState extends State<UserFormScreen> {
 
     return Scaffold(
       backgroundColor: AppTokens.pageBg,
-      appBar: AppBar(
-        title: const Text(''),
-        toolbarHeight: 0,
-      ),
+      appBar: AppBar(title: const Text(''), toolbarHeight: 0),
       body: _loading && widget.userId != null
           ? const Center(child: CircularProgressIndicator())
           : SafeArea(
@@ -215,8 +212,8 @@ class _UserFormScreenState extends State<UserFormScreen> {
                                       ),
                                       validator: (v) =>
                                           (v == null || v.trim().isEmpty)
-                                              ? 'Required'
-                                              : null,
+                                          ? 'Required'
+                                          : null,
                                     ),
                                   ),
                                   const SizedBox(width: 12),
@@ -229,8 +226,8 @@ class _UserFormScreenState extends State<UserFormScreen> {
                                       ),
                                       validator: (v) =>
                                           (v == null || v.trim().isEmpty)
-                                              ? 'Required'
-                                              : null,
+                                          ? 'Required'
+                                          : null,
                                     ),
                                   ),
                                 ],
@@ -246,8 +243,8 @@ class _UserFormScreenState extends State<UserFormScreen> {
                                 ),
                                 validator: (v) =>
                                     (v == null || v.trim().isEmpty)
-                                        ? 'Required'
-                                        : null,
+                                    ? 'Required'
+                                    : null,
                               ),
                               const SizedBox(height: 12),
                               TextFormField(
@@ -280,18 +277,24 @@ class _UserFormScreenState extends State<UserFormScreen> {
                                 ),
                                 items: const [
                                   DropdownMenuItem(
-                                      value: 'admin', child: Text('Admin')),
+                                    value: 'admin',
+                                    child: Text('Admin'),
+                                  ),
                                   DropdownMenuItem(
-                                      value: 'manager',
-                                      child: Text('Manager')),
+                                    value: 'manager',
+                                    child: Text('Manager'),
+                                  ),
                                   DropdownMenuItem(
-                                      value: 'trainer', child: Text('Trainer')),
+                                    value: 'trainer',
+                                    child: Text('Trainer'),
+                                  ),
                                   DropdownMenuItem(
-                                      value: 'member', child: Text('Member')),
+                                    value: 'member',
+                                    child: Text('Member'),
+                                  ),
                                 ],
-                                onChanged: (v) => setState(
-                                  () => _role = v ?? 'member',
-                                ),
+                                onChanged: (v) =>
+                                    setState(() => _role = v ?? 'member'),
                               ),
                               const SizedBox(height: 12),
                               DropdownButtonFormField<String>(

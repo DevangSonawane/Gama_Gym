@@ -390,26 +390,76 @@ class _MemberFormScreenState extends State<MemberFormScreen> {
                             children: [
                               DropdownButtonFormField<String>(
                                 initialValue: _trainerId,
+                                isExpanded: true,
                                 decoration: const InputDecoration(
                                   labelText: 'Trainer',
                                   border: OutlineInputBorder(),
                                 ),
+                                selectedItemBuilder: (context) {
+                                  final items = <String>[
+                                    '',
+                                    if (_loadingTrainers)
+                                      '__loading__'
+                                    else
+                                      ..._trainers.map((t) => t.id),
+                                  ];
+                                  return items
+                                      .map(
+                                        (id) => Align(
+                                          alignment: Alignment.centerLeft,
+                                          child: Text(
+                                            id.isEmpty
+                                                ? 'Select Trainer'
+                                                : id == '__loading__'
+                                                ? 'Loading trainers...'
+                                                : () {
+                                                    StaffMember? match;
+                                                    for (final t in _trainers) {
+                                                      if (t.id == id) {
+                                                        match = t;
+                                                        break;
+                                                      }
+                                                    }
+                                                    if (match == null) {
+                                                      return 'Unknown trainer';
+                                                    }
+                                                    return _trainerLabel(match);
+                                                  }(),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      )
+                                      .toList();
+                                },
                                 items: [
                                   const DropdownMenuItem(
                                     value: '',
-                                    child: Text('Select Trainer'),
+                                    child: Text(
+                                      'Select Trainer',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
                                   if (_loadingTrainers)
                                     const DropdownMenuItem(
                                       value: '__loading__',
                                       enabled: false,
-                                      child: Text('Loading trainers...'),
+                                      child: Text(
+                                        'Loading trainers...',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     )
                                   else
                                     for (final t in _trainers)
                                       DropdownMenuItem(
                                         value: t.id,
-                                        child: Text(_trainerLabel(t)),
+                                        child: Text(
+                                          _trainerLabel(t),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
                                 ],
                                 onChanged: (v) =>

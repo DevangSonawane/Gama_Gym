@@ -1,0 +1,16 @@
+.DS_Store
+
+# Env / secrets
+.env
+.env.*
+**/.env
+**/.env.*
+
+# Flutter / Dart
+**/.dart_tool/
+**/build/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+
+# Node
+**/node_modules/

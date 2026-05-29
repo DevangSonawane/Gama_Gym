@@ -156,7 +156,7 @@ class DashboardShell extends StatelessWidget {
           appBar: AppBar(
             title: Image.asset(
               'assets/images/gamalog.png',
-              height: 26,
+              height: 90,
               fit: BoxFit.contain,
             ),
             actions: [
@@ -175,10 +175,7 @@ class DashboardShell extends StatelessWidget {
               const SizedBox(width: 4),
             ],
           ),
-          body: SafeArea(
-            bottom: false,
-            child: buildBody(),
-          ),
+          body: SafeArea(bottom: false, child: buildBody()),
           bottomNavigationBar: isWide
               ? null
               : _FloatingPillNav(

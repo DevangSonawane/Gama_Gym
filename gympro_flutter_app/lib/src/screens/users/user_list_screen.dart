@@ -124,9 +124,9 @@ class _UserListScreenState extends State<UserListScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 
@@ -167,10 +167,7 @@ class _UserListScreenState extends State<UserListScreen> {
 
     return Scaffold(
       backgroundColor: AppTokens.pageBg,
-      appBar: AppBar(
-        title: const Text(''),
-        toolbarHeight: 0,
-      ),
+      appBar: AppBar(title: const Text(''), toolbarHeight: 0),
       body: RefreshIndicator(
         onRefresh: _load,
         child: SafeArea(
@@ -247,9 +244,9 @@ class _UserListScreenState extends State<UserListScreen> {
                               Text(
                                 entry.key,
                                 style: TextStyle(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -377,10 +374,12 @@ class _UserListScreenState extends State<UserListScreen> {
                                   context: context,
                                   text: u.role,
                                   fg: _roleAccent(u.role),
-                                  bg: _roleAccent(u.role)
-                                      .withValues(alpha: 0.10),
-                                  border: _roleAccent(u.role)
-                                      .withValues(alpha: 0.25),
+                                  bg: _roleAccent(
+                                    u.role,
+                                  ).withValues(alpha: 0.10),
+                                  border: _roleAccent(
+                                    u.role,
+                                  ).withValues(alpha: 0.25),
                                 ),
                                 statusPill: _pill(
                                   context: context,
@@ -396,8 +395,7 @@ class _UserListScreenState extends State<UserListScreen> {
                                       : Colors.black.withValues(alpha: 0.10),
                                 ),
                                 onView: () => context.go('/users/${u.id}'),
-                                onEdit: () =>
-                                    context.go('/users/${u.id}/edit'),
+                                onEdit: () => context.go('/users/${u.id}/edit'),
                                 onDelete: () => _confirmDelete(u.id),
                               ),
                               if (u.id != filteredRows.last.id)
@@ -495,8 +493,7 @@ class _UserDirectoryRow extends StatelessWidget {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.mail_outline,
-                              size: 16, color: muted),
+                          Icon(Icons.mail_outline, size: 16, color: muted),
                           const SizedBox(width: 6),
                           Text(
                             user.email,
@@ -511,8 +508,7 @@ class _UserDirectoryRow extends StatelessWidget {
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.phone_outlined,
-                                size: 16, color: muted),
+                            Icon(Icons.phone_outlined, size: 16, color: muted),
                             const SizedBox(width: 6),
                             Text(
                               user.phoneNumber!,
@@ -531,11 +527,7 @@ class _UserDirectoryRow extends StatelessWidget {
             const SizedBox(width: 10),
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                rolePill,
-                const SizedBox(height: 8),
-                statusPill,
-              ],
+              children: [rolePill, const SizedBox(height: 8), statusPill],
             ),
             const SizedBox(width: 8),
             Row(
